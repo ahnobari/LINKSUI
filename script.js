@@ -1,6 +1,6 @@
 // Modern Linkage Designer JavaScript
 import { simulateMechanism } from './mechanismSolver.js';
-import { curves } from './curves.js';
+import { curves, solutions } from './curves.js';
 // Global variables
 let nodeCount = 0;
 let currentNodeId = 0;
@@ -2425,6 +2425,31 @@ function handleFileSelect(e) {
                 throw new Error('Invalid file format.');
             }
             
+            // rescale the mechanism to fit and be centered
+            const nodeCount = state.nodes.length;
+            const canvasRect = canvas.getBoundingClientRect();
+            const centerX = canvasRect.width / 2;
+            const centerY = canvasRect.height / 2;
+            
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            state.nodes.forEach(node => {
+                minX = Math.min(minX, node.x);
+                minY = Math.min(minY, node.y);
+                maxX = Math.max(maxX, node.x);
+                maxY = Math.max(maxY, node.y);
+            });
+
+            const width = maxX - minX;
+            const height = maxY - minY;
+            const scale = Math.min(canvasRect.width / width, canvasRect.height / height) * 0.5;
+            const offsetX = centerX - (minX + maxX) / 2 * scale;
+            const offsetY = centerY - (minY + maxY) / 2 * scale;
+
+            state.nodes.forEach(node => {
+                node.x = node.x * scale + offsetX;
+                node.y = node.y * scale + offsetY;
+            });
+
             loadMechanismState(state);
             addToHistory();
             updateStatusMessage('Mechanism loaded successfully.');
@@ -2833,6 +2858,7 @@ function initChallenge() {
     const challengeLevel = document.getElementById('challenge-level');
     const evaluateBtn = document.getElementById('evaluate-challenge');
     const clearBtn = document.getElementById('clear-attempt');
+    const solutionButton = document.getElementById('show-solution');
     
     let isPanelOpen = true;
     
@@ -2883,6 +2909,16 @@ function initChallenge() {
 
     challengeLevel.selectedIndex = 0;
     loadChallengeCurve(challenge_titles[0]);
+
+    // Add event listener for solution button
+    solutionButton.addEventListener('click', () => {
+        const challengeLevel = document.getElementById('challenge-level').value;
+        const solutionMechanism = solutions[challengeLevel];
+
+        loadMechanismState(solutionMechanism);
+        addToHistory();
+    });
+    
 }
 
 function clearChallenge() {
