@@ -654,7 +654,7 @@ body.simulation-mode .mobile-controls {
     box-shadow: var(--box-shadow);
     z-index: 100;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    
 }
 
 .simulation-controls.active {
@@ -844,7 +844,7 @@ body.simulation-mode .mobile-controls-file {
 
 .simulation-path {
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    
 }
 
 body.simulation-mode .node:not(.ground) {
@@ -865,7 +865,7 @@ body.simulation-mode .node:not(.ground) {
 
 .simulation-path {
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    
 }
 
 body.simulation-mode .node:not(.ground) {
@@ -932,7 +932,7 @@ body.simulation-mode .node:not(.ground) {
     stroke-linecap: round;
     stroke-linejoin: round;
     pointer-events: none; /* Don't interfere with user interactions */
-    transition: opacity 0.3s ease;
+    
 }
 
 /* Target node path styling (bolder) */
@@ -953,7 +953,7 @@ body.simulation-mode .node:not(.ground) {
 
 /* Path group styling */
 #simulation-paths {
-    opacity: 0.8;
+    /* opacity: 0.8; */
     mix-blend-mode: multiply; /* Make overlapping paths blend nicely */
 }
 
@@ -992,7 +992,7 @@ body.simulation-mode .node:not(.ground) {
     border-radius: var(--border-radius);
     font-size: 0.85rem;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    
     pointer-events: none;
     box-shadow: var(--box-shadow);
     z-index: 100;
@@ -1069,4 +1069,123 @@ body.simulation-mode .node:not(.ground) {
 
 .mobile-toggle.collapsed {
     bottom: 50px;
+}
+
+.tool-btn.preview-active {
+    background-color: var(--success);
+    color: white;
+}
+
+.mobile-btn.preview-active {
+    background-color: var(--success);
+    color: white;
+}
+
+/* Path styling for preview mode */
+.preview-path {
+    fill: none;
+    stroke: var(--path-color);
+    stroke-width: 2;
+    stroke-opacity: 0.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+}
+
+.preview-path.target-path {
+    stroke: var(--target-path-color);
+    stroke-width: 3;
+    stroke-opacity: 0.7;
+}
+
+.preview-path.motor-path {
+    stroke: var(--motor-path-color);
+    stroke-width: 3;
+    stroke-opacity: 0.6;
+    stroke-dasharray: 5, 3;
+}
+
+/* Preview mode indicator */
+.preview-mode-indicator {
+    position: absolute;
+    bottom: 40px;
+    right: 10px;
+    background-color: var(--success);
+    color: white;
+    padding: 5px 10px;
+    border-radius: var(--border-radius);
+    font-size: 0.85rem;
+    opacity: 0;
+    pointer-events: none;
+    box-shadow: var(--box-shadow);
+    z-index: 100;
+    transition: opacity 0.3s ease;
+}
+
+.preview-mode-indicator.visible {
+    opacity: 1;
+}
+
+/* For mobile, position preview indicator above controls */
+@media (max-width: 768px) {
+    .preview-mode-indicator {
+        bottom: 360px;
+    }
+    
+    .mobile-toggle.collapsed + .preview-mode-indicator {
+        bottom: 100px;
+    }
+}
+
+#quick-sim i {
+    color: var(--warning);
+}
+
+#quick-sim.active,
+.mobile-btn[data-tool="quick-sim"].active {
+    background-color: var(--warning);
+    color: white;
+}
+
+#quick-sim.active i,
+.mobile-btn[data-tool="quick-sim"].active i {
+    color: white;
+}
+
+/* Active quick sim styling */
+body.quick-sim-mode #canvas-container {
+    position: relative;
+}
+
+body.quick-sim-mode #canvas-container::after {
+    content: "Running quick simulation...";
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(var(--bg-secondary-rgb), 0.9);
+    color: var(--text-primary);
+    padding: 5px 15px;
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+    pointer-events: none;
+    z-index: 50;
+}
+
+/* Disable node dragging during quick sim */
+body.quick-sim-mode .node {
+    cursor: default;
+    pointer-events: none;
+}
+
+body.controls-disabled .mobile-btn:not([data-tool="quick-sim"]) {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Also disable mobile file controls during quick sim */
+body.quick-sim-mode .mobile-controls-file button,
+body.controls-disabled .mobile-controls-file button {
+    opacity: 0.5;
+    pointer-events: none;
 }

@@ -27,6 +27,12 @@ let animationSpeed = 0.2; // Degrees per millisecond (can be adjusted)
 let animation_inverted = false;
 let moveSimulationTimeout = null;
 let isCurrentlyMoving = false;
+let previewmode = false;
+let quickSimMode = false;
+let quickSimStartAngle = 0;
+let quickSimAnimationId = null;
+let quickSimCompleted = false;
+let savedTool = null;
 
 // DOM Elements
 const canvas = document.getElementById('linkage-canvas');
@@ -188,7 +194,8 @@ function init() {
     setupSimulationControls();
     setViewportHeight();
     setupMobileToggle();
-
+    QuickSimSetup();
+    document.getElementById('toggle-preview').addEventListener('click', togglePreviewMode);
     // Add first operation to history (empty canvas)
     addToHistory();
     // Create initial four-bar mechanism
@@ -228,6 +235,14 @@ function setupMobileToggle() {
             mobileControls.classList.contains('collapsed')
         );
     });
+
+    const previewBtn = document.querySelector('.mobile-btn[data-tool="toggle-preview"]');
+    if (previewBtn) {
+        previewBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent tool selection behavior
+            togglePreviewMode();
+        });
+    }
 }
 
 // Update the animation loop to skip locking frames
@@ -1143,7 +1158,7 @@ function setActiveTool(tool) {
         return;
     }
 
-    clearTempSimulationPath();
+    // clearTempSimulationPath();
     // Remove active class from all tools
     document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.mobile-btn').forEach(btn => btn.classList.remove('active'));
@@ -1269,6 +1284,7 @@ function bindKeyboardShortcuts() {
                 case 't': setActiveTool('select-target'); break;
                 case 'delete': case 'backspace': setActiveTool('delete'); break;
                 case 's': toggleSimulationMode(); break;
+                case 'p': togglePreviewMode(); break;
             }
         }
         
@@ -1642,7 +1658,7 @@ function makeDraggable(element) {
         isCurrentlyMoving = true;
         
         // Clear any existing temp path
-        clearTempSimulationPath();
+        // clearTempSimulationPath();
         
         document.onmouseup = closeDragElement;
         document.onmousemove = elementDrag;
@@ -1660,7 +1676,7 @@ function makeDraggable(element) {
         isCurrentlyMoving = true;
         
         // Clear any existing temp path
-        clearTempSimulationPath();
+        // clearTempSimulationPath();
         
         document.ontouchend = closeDragElement;
         document.ontouchmove = elementTouchDrag;
@@ -1759,7 +1775,6 @@ function makeDraggable(element) {
         runMoveSimulation(200);
         
         addToHistory();
-        clearTempSimulationPath();
     }
 }
 
@@ -1777,7 +1792,7 @@ function scheduleMoveSim() {
 
 function runMoveSimulation(numSteps = 200) {
     // Only run if we have a target node
-    if (!targetNode || !isCurrentlyMoving) return;
+    if (!previewmode) return;
     
     // Get current mechanism state
     const state = getMechanismState();
@@ -1810,52 +1825,80 @@ function drawTempTargetPath(positions, lockingFrames, targetNode) {
     // Clear any existing temp path
     clearTempSimulationPath();
     
-    // Create a temporary path element
-    const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    pathElement.id = 'temp-simulation-path';
-    pathElement.classList.add('simulation-path', 'target-path');
+    // Create a temporary group for all paths
+    const pathsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    pathsGroup.id = 'temp-simulation-path';
     
-    // Get target node ID
-    const targetNodeId = parseInt(targetNode.id.substring(4));
+    // Get all non-ground nodes
+    const nodes = Array.from(document.querySelectorAll('.node')).filter(node => !node.classList.contains('ground'));
     
-    // Generate the SVG path data
-    let pathData = "";
-    let validPoints = 0;
-    let currentPath = "";
+    // Get motor nodes
+    let motorNodes = [];
+    if (motorEdge) {
+        const startNodeId = motorEdge.getAttribute('data-start');
+        const endNodeId = motorEdge.getAttribute('data-end');
+        motorNodes = [startNodeId, endNodeId];
+    }
     
-    // Check if we have valid position data for the target node
-    positions.forEach((frame, frameIndex) => {
-        const point = frame[targetNodeId];
-        const isValidPoint = point && !isNaN(point[0]) && !isNaN(point[1]);
+    // Draw path for each non-ground node
+    nodes.forEach(node => {
+        // Create path for this node
+        const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        pathElement.classList.add('simulation-path');
         
-        if (isValidPoint && !lockingFrames[frameIndex]) {
-            // Start new path if we don't have one
-            if (currentPath === "") {
-                currentPath = `M${point[0]},${point[1]} `;
-            } else {
-                currentPath += `L${point[0]},${point[1]} `;
+        // Get node's numeric ID
+        const nodeId = parseInt(node.id.substring(4));
+        
+        // Generate the SVG path data
+        let pathData = "";
+        let validPoints = 0;
+        let currentPath = "";
+        
+        // Generate path data points
+        positions.forEach((frame, frameIndex) => {
+            const point = frame[nodeId];
+            const isValidPoint = point && !isNaN(point[0]) && !isNaN(point[1]);
+            
+            if (isValidPoint && !lockingFrames[frameIndex]) {
+                if (currentPath === "") {
+                    currentPath = `M${point[0]},${point[1]} `;
+                } else {
+                    currentPath += `L${point[0]},${point[1]} `;
+                }
+                validPoints++;
+            } else if (currentPath !== "") {
+                pathData += currentPath;
+                currentPath = "";
             }
-            validPoints++;
-        } else if (currentPath !== "") {
-            // End current path segment and add to total path
+        });
+        
+        // Add final path segment
+        if (currentPath !== "") {
             pathData += currentPath;
-            currentPath = "";
+        }
+        
+        // Only add path if it has valid points
+        if (validPoints > 0) {
+            pathElement.setAttribute('d', pathData);
+            pathElement.setAttribute('data-node-id', node.id);
+            pathElement.style.strokeOpacity = '1.0'; // More transparent during move
+            
+            // Add appropriate classes
+            if (motorNodes.includes(node.id)) {
+                pathElement.classList.add('motor-path');
+            }
+            if (node === targetNode) {
+                pathElement.classList.add('target-path');
+            }
+            
+            // Add to group
+            pathsGroup.appendChild(pathElement);
         }
     });
     
-    // Add final path segment if exists
-    if (currentPath !== "") {
-        pathData += currentPath;
-    }
-    
-    // Only add path if it has valid points
-    if (validPoints > 0) {
-        // Set properties on the path
-        pathElement.setAttribute('d', pathData);
-        pathElement.style.strokeOpacity = '1.0'; // Slightly more transparent during move
-        
-        // Add to canvas directly (not in the paths group)
-        canvas.appendChild(pathElement);
+    // Add group to canvas if it has children
+    if (pathsGroup.children.length > 0) {
+        canvas.appendChild(pathsGroup);
     }
 }
 
@@ -2087,7 +2130,9 @@ function updateStatusMessage(message) {
 // Add current state to history
 function addToHistory(cutoff = true) {
     const state = getMechanismState();
-    
+
+    clearTempSimulationPath();
+    runMoveSimulation(200);
     // Add state to history at current position
     currentHistoryIndex++;
     operationHistory[currentHistoryIndex] = state;
@@ -2096,6 +2141,8 @@ function addToHistory(cutoff = true) {
     if (cutoff) {
         operationHistory.splice(currentHistoryIndex + 1);
     }
+
+    
 }
 
 // Undo operation
@@ -2107,6 +2154,8 @@ function undo() {
     
     currentHistoryIndex--;
     loadMechanismState(operationHistory[currentHistoryIndex]);
+    clearTempSimulationPath();
+    runMoveSimulation(200);
     updateStatusMessage('Undo successful.');
 }
 
@@ -2119,6 +2168,8 @@ function redo() {
     
     currentHistoryIndex++;
     loadMechanismState(operationHistory[currentHistoryIndex]);
+    clearTempSimulationPath();
+    runMoveSimulation(200);
     updateStatusMessage('Redo successful.');
 }
 
@@ -2380,6 +2431,385 @@ function handleFileSelect(e) {
 // Calculate distance between two points
 function getDistance(x1, y1, x2, y2) {
     return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+}
+
+// Preview Mode Toggle Function
+function togglePreviewMode() {
+    previewmode = !previewmode;
+    
+    // Update UI
+    const previewButton = document.getElementById('toggle-preview');
+    const mobilePreviewButton = document.querySelector('.mobile-btn[data-tool="toggle-preview"]');
+    
+    if (previewmode) {
+        previewButton.classList.add('preview-active');
+        if (mobilePreviewButton) mobilePreviewButton.classList.add('preview-active');
+        
+        // Show indicator
+        // showPreviewModeIndicator();
+        
+        // Generate initial preview
+        runMoveSimulation(200);
+        
+        updateStatusMessage('Preview mode active. Move elements to see mechanism paths.');
+    } else {
+        previewButton.classList.remove('preview-active');
+        if (mobilePreviewButton) mobilePreviewButton.classList.remove('preview-active');
+        
+        // Clear temp paths
+        clearTempSimulationPath();
+        
+        // Hide indicator
+        // hidePreviewModeIndicator();
+        
+        updateStatusMessage('Preview mode disabled.');
+    }
+}
+
+// Function to show preview mode indicator
+function showPreviewModeIndicator() {
+    // Create indicator if it doesn't exist
+    if (!document.getElementById('preview-mode-indicator')) {
+        const indicator = document.createElement('div');
+        indicator.id = 'preview-mode-indicator';
+        indicator.className = 'preview-mode-indicator';
+        indicator.textContent = 'Preview Mode Active';
+        document.getElementById('canvas-container').appendChild(indicator);
+    }
+    
+    // Show the indicator
+    const indicator = document.getElementById('preview-mode-indicator');
+    indicator.classList.add('visible');
+    
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+        indicator.classList.remove('visible');
+    }, 3000);
+}
+
+// Function to hide preview mode indicator
+function hidePreviewModeIndicator() {
+    const indicator = document.getElementById('preview-mode-indicator');
+    if (indicator) {
+        indicator.classList.remove('visible');
+    }
+}
+
+function startQuickSim() {
+    // If already in simulation mode or quick sim mode, ignore
+    if (simulationMode || quickSimMode) return;
+    
+    // Reset traced path points
+    tracedPathPoints = {};
+    
+    // Clear any existing paths
+    clearTempSimulationPath();
+    
+    // Add quick-sim-mode class to body
+    document.body.classList.add('quick-sim-mode');
+    
+    // Get current mechanism state
+    const state = getMechanismState();
+    
+    // Check minimum requirements for simulation
+    if (state.nodes.length < 2 || state.edges.length < 1) {
+        showModal('Quick Sim Error', 'Cannot simulate: No mechanism defined. Please add nodes and links first.');
+        return;
+    }
+    
+    // Check for motor edge
+    if (!motorEdge) {
+        showModal('Quick Sim Error', 'No motor edge defined. Please select a motor edge (connected to ground) to drive the mechanism.');
+        return;
+    }
+    
+    // Run simulation with fewer steps for performance
+    try {
+        const simulation = simulateMechanism(state, 360);
+        
+        // If simulation is valid, store it for later use
+        if (simulation.isValid) {
+            window.currentSimulation = simulation;
+        } else {
+            showModal('Quick Sim Error', 'Cannot simulate: Mechanism is not valid for simulation.', false);
+            endQuickSim();
+            return;
+        }
+    } catch (error) {
+        console.log('Quick sim error:', error);
+        endQuickSim();
+        return;
+    }
+    
+    // Find current angle of motor edge
+    const startNode = motorEdge.getAttribute('data-start');
+    const endNode = motorEdge.getAttribute('data-end');
+    let startNodeId = parseInt(startNode.substring(4));
+    let endNodeId = parseInt(endNode.substring(4));
+
+    // Swap so that ground node is always start node
+    if (!state.nodes[startNodeId].isGround) {
+        const temp = startNodeId;
+        startNodeId = endNodeId;
+        endNodeId = temp;
+    }
+
+    const dx = state.nodes[endNodeId].x - state.nodes[startNodeId].x;
+    const dy = state.nodes[endNodeId].y - state.nodes[startNodeId].y;
+    let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+    if (angle < 0) {
+        angle += 360;
+    }
+    
+    // Store as our start angle - we'll use this to determine when we've completed a cycle
+    quickSimStartAngle = angle;
+    
+    // Set the simulation position to the angle of the motor edge
+    simulationPosition = angle;
+    
+    // Update status message
+    updateStatusMessage('Quick simulation running... (Animation will trace paths as it moves)');
+    
+    // Start the quick sim animation
+    quickSimMode = true;
+    quickSimCompleted = false;
+    animation_inverted = false;  // Start in forward direction
+    lastTimestamp = 0;
+
+    document.querySelectorAll('.tool-btn').forEach(btn => {
+        btn.classList.add('disabled');
+    });
+
+    document.querySelectorAll('.mobile-btn').forEach(btn => {
+        btn.classList.add('disabled');
+    });
+
+    document.body.classList.add('controls-disabled');
+
+    savedTool = activeTool;
+    activeTool = null;
+    
+    // Cancel any ongoing animation
+    if (quickSimAnimationId) {
+        cancelAnimationFrame(quickSimAnimationId);
+    }
+    
+    // Start a new animation
+    quickSimAnimationId = requestAnimationFrame(quickSimAnimationLoop);
+}
+
+let tracedPathPoints = {};
+
+// 2. Modify quickSimAnimationLoop to build and draw the path as we go
+function quickSimAnimationLoop(timestamp) {
+    // Skip first frame for accurate timing
+    if (lastTimestamp === 0) {
+        lastTimestamp = timestamp;
+        
+        // Initialize traced path points if not already done
+        if (Object.keys(tracedPathPoints).length === 0) {
+            // Get all non-ground nodes
+            const nodes = Array.from(document.querySelectorAll('.node')).filter(node => !node.classList.contains('ground'));
+            
+            // Initialize empty array for each node
+            nodes.forEach(node => {
+                const nodeId = parseInt(node.id.substring(4));
+                tracedPathPoints[nodeId] = [];
+            });
+        }
+        
+        quickSimAnimationId = requestAnimationFrame(quickSimAnimationLoop);
+        return;
+    }
+    
+    // Calculate time delta and update position based on speed
+    const deltaTime = timestamp - lastTimestamp;
+    lastTimestamp = timestamp;
+    
+    // Use a fixed speed for quick sim
+    const quickSimSpeed = 20;
+    
+    // Calculate new position
+    const degreesPerFrame = (deltaTime * animationSpeed * quickSimSpeed / 50);
+    let newPosition = (simulationPosition + degreesPerFrame * (animation_inverted ? -1 : 1)) % simulationMaxPosition;
+    
+    if (newPosition < 0) {
+        newPosition += simulationMaxPosition;
+    }
+    
+    // Check if the next position would enter a locking region
+    const nextFrameIndex = Math.round((newPosition / 360) * (window.currentSimulation.positions.length - 1));
+    
+    // If moving to a locking frame, reverse direction
+    if (window.currentSimulation.lockingFrames[nextFrameIndex]) {
+        animation_inverted = !animation_inverted;
+        newPosition = (simulationPosition + degreesPerFrame * (animation_inverted ? -1 : 1)) % simulationMaxPosition;
+        
+        if (newPosition < 0) {
+            newPosition += simulationMaxPosition;
+        }
+    }
+    
+    simulationPosition = newPosition;
+    
+    // Get the current frame from the simulation
+    const currentFrameIndex = Math.round((newPosition / 360) * (window.currentSimulation.positions.length - 1));
+    const currentFrame = window.currentSimulation.positions[currentFrameIndex];
+    
+    // Skip if frame is invalid or has locking
+    if (!window.currentSimulation.lockingFrames[currentFrameIndex]) {
+        // Add current position to traced path for each node
+        Object.keys(tracedPathPoints).forEach(nodeId => {
+            const position = currentFrame[parseInt(nodeId)];
+            if (position && !isNaN(position[0]) && !isNaN(position[1])) {
+                // Check if this point is already in our traced path
+                const lastPoint = tracedPathPoints[nodeId][tracedPathPoints[nodeId].length - 1];
+                if (!lastPoint || 
+                    Math.abs(lastPoint[0] - position[0]) > 0.1 || 
+                    Math.abs(lastPoint[1] - position[1]) > 0.1) {
+                    tracedPathPoints[nodeId].push([position[0], position[1]]);
+                }
+            }
+        });
+    }
+    
+    // Update mechanism positions
+    updateMechanismPositions(simulationPosition);
+    
+    // Draw the traced paths
+    drawTracedPaths();
+    
+    // Check if we've completed a cycle (returned to starting angle in FORWARD direction only)
+    if (!animation_inverted && Math.abs(quickSimStartAngle - simulationPosition) < 0.25) {
+        // Only complete if we're in forward direction
+        endQuickSim();
+        return;
+    }
+    
+    // Continue animation loop
+    quickSimAnimationId = requestAnimationFrame(quickSimAnimationLoop);
+}
+
+// 3. Add a function to draw the traced paths
+function drawTracedPaths() {
+    // Clear any existing temp path
+    clearTempSimulationPath();
+    
+    // If no traced points, return
+    if (Object.keys(tracedPathPoints).length === 0) return;
+    
+    // Create a temporary group for all paths
+    const pathsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    pathsGroup.id = 'temp-simulation-path';
+    
+    // Get all non-ground nodes
+    const nodes = Array.from(document.querySelectorAll('.node')).filter(node => !node.classList.contains('ground'));
+    
+    // Get motor nodes
+    let motorNodeIds = [];
+    if (motorEdge) {
+        const startNodeId = motorEdge.getAttribute('data-start');
+        const endNodeId = motorEdge.getAttribute('data-end');
+        motorNodeIds = [startNodeId, endNodeId];
+    }
+    
+    // Create paths from the traced points
+    nodes.forEach(node => {
+        const nodeId = parseInt(node.id.substring(4));
+        const points = tracedPathPoints[nodeId];
+        
+        // Skip if no points for this node
+        if (!points || points.length < 2) return;
+        
+        // Create path element
+        const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        pathElement.classList.add('simulation-path');
+        
+        // Generate path data
+        let pathData = `M${points[0][0]},${points[0][1]} `;
+        for (let i = 1; i < points.length; i++) {
+            pathData += `L${points[i][0]},${points[i][1]} `;
+        }
+        
+        pathElement.setAttribute('d', pathData);
+        pathElement.setAttribute('data-node-id', node.id);
+        
+        // Add appropriate classes
+        if (motorNodeIds.includes(node.id)) {
+            pathElement.classList.add('motor-path');
+        }
+        if (node === targetNode) {
+            pathElement.classList.add('target-path');
+        }
+        
+        // Add to group
+        pathsGroup.appendChild(pathElement);
+    });
+    
+    // Add group to canvas
+    if (pathsGroup.children.length > 0) {
+        canvas.appendChild(pathsGroup);
+    }
+}
+
+function QuickSimSetup() {
+    // Add Quick Sim button event listener
+    document.getElementById('quick-sim').addEventListener('click', startQuickSim);
+
+    // Add mobile Quick Sim button event listener
+    const mobileQuickSimBtn = document.querySelector('.mobile-btn[data-tool="quick-sim"]');
+    if (mobileQuickSimBtn) {
+        mobileQuickSimBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            startQuickSim();
+        });
+}
+
+// Add keyboard shortcut for Quick Sim
+document.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'q' && 
+        !e.ctrlKey && 
+        !e.metaKey && 
+        e.target.tagName !== 'INPUT' && 
+        e.target.tagName !== 'TEXTAREA' &&
+        !simulationMode &&
+        !quickSimMode) {
+        startQuickSim();
+    }
+});
+}
+
+function endQuickSim() {
+    // Stop the animation
+    if (quickSimAnimationId) {
+        cancelAnimationFrame(quickSimAnimationId);
+        quickSimAnimationId = null;
+    }
+    
+    // End the active animation
+    quickSimMode = false;
+    document.querySelectorAll('.tool-btn').forEach(btn => {
+        btn.classList.remove('disabled');
+    });
+    document.querySelectorAll('.mobile-btn').forEach(btn => {
+        btn.classList.remove('disabled');
+    });
+    document.body.classList.remove('controls-disabled');
+    activeTool = savedTool;
+
+    // Remove any position markers
+    const markers = document.querySelectorAll('.current-position-marker');
+    markers.forEach(marker => marker.remove());
+    
+    // Remove quick-sim-mode class from body
+    document.body.classList.remove('quick-sim-mode');
+    
+    // Restore original node positions
+    resetNodePositions();
+    
+    // We'll keep the traced paths visible until the next simulation or modification
+    
+    updateStatusMessage('Quick simulation complete. Paths will remain visible until the mechanism is modified.');
 }
 
 // Initialize the application on window load
