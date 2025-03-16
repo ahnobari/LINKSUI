@@ -325,7 +325,7 @@ function solveMechanism(adjacencyMatrix, positions, motorNodes, fixedNodes, thet
         ];
         
         // Solve for remaining nodes in order
-        for (let k = 3; k < numNodes; k++) {
+        for (let k = fixedNodes.length + 1; k < numNodes; k++) {
             // Find two connections to this node from previous nodes
             const connections = [];
             for (let j = 0; j < k; j++) {
