@@ -914,11 +914,6 @@ body.simulation-mode .node:not(.ground) {
     filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.3));
 }
 
-/* Show simulation paths with reduced opacity when not in active simulation */
-body:not(.simulation-mode) .simulation-path {
-    opacity: 0.3;
-}
-
 /* Highlight active frame in simulation */
 .simulation-frame-highlight {
     stroke: white;
@@ -933,7 +928,7 @@ body:not(.simulation-mode) .simulation-path {
     fill: none;
     stroke: var(--path-color);
     stroke-width: 2;
-    stroke-opacity: 0.7;
+    /* stroke-opacity: 0.7; */
     stroke-linecap: round;
     stroke-linejoin: round;
     pointer-events: none; /* Don't interfere with user interactions */
@@ -944,7 +939,7 @@ body:not(.simulation-mode) .simulation-path {
 .simulation-path.target-path {
     stroke: var(--target-path-color);
     stroke-width: 3;
-    stroke-opacity: 0.9;
+    /* stroke-opacity: 0.9; */
     stroke-dasharray: none;
 }
 
@@ -952,7 +947,7 @@ body:not(.simulation-mode) .simulation-path {
 .simulation-path.motor-path {
     stroke: var(--motor-path-color);
     stroke-width: 3;
-    stroke-opacity: 0.8;
+    /* stroke-opacity: 0.8; */
     stroke-dasharray: 5, 3; /* Dashed line to match motor edge style */
 }
 
@@ -964,7 +959,7 @@ body:not(.simulation-mode) .simulation-path {
 
 /* Path styling during simulation play */
 .simulation-playing #simulation-paths {
-    opacity: 0.3; /* Fade paths when playing to focus on the moving mechanism */
+    opacity: 0.5; /* Fade paths when playing to focus on the moving mechanism */
 }
 
 /* Simulation mode indicator */
