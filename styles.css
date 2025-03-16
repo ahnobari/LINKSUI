@@ -1083,6 +1083,14 @@ body.simulation-mode .mobile-controls-file {
   background-color: var(--danger);
 }
 
+#show-solution {
+  background-color: var(--success);
+}
+
+#show-solution:hover {
+  background-color: var(--accent-tertiary);
+}
+
 .challenge-score {
   background-color: var(--bg-tertiary);
   padding: 8px 12px;
