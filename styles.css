@@ -705,11 +705,16 @@ body.select-target {
 
 .mobile-toggle {
   position: fixed;
-  bottom: 305px;
+  bottom: 370px;
   right: 10px;
   z-index: 101;
   display: none;
-  transition: bottom 0.3s ease;
+  transition: right 0.3s ease, bottom 0.3s ease;
+}
+
+.simulation-mode .mobile-toggle {
+  bottom: 235px;
+  right: calc(50% - 200px);
 }
 
 .mobile-toggle.collapsed {
