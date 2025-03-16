@@ -40,6 +40,131 @@ const modalOkBtn = document.getElementById('modal-ok');
 const modalCancelBtn = document.getElementById('modal-cancel');
 const closeModal = document.querySelector('.close-modal');
 
+function createInitialFourBar() {
+    console.log("Creating initial four-bar mechanism...");
+    
+    // Clear any existing elements first
+    clearCanvas(false);
+    
+    // Get canvas dimensions to center the mechanism
+    const canvasWidth = canvas.clientWidth;
+    const canvasHeight = canvas.clientHeight;
+    
+    console.log(`Canvas dimensions: ${canvasWidth}x${canvasHeight}`);
+    
+    // Calculate center point of canvas
+    const centerX = Math.floor(canvasWidth / 2);
+    const centerY = Math.floor(canvasHeight / 2);
+    
+    // Size of the mechanism (adjust based on canvas size)
+    const size = Math.min(canvasWidth, canvasHeight) * 0.3; // 30% of smaller dimension
+    
+    console.log(`Mechanism size: ${size}, Center: (${centerX}, ${centerY})`);
+    
+    // Add ground nodes (two fixed points)
+    const ground1X = centerX - size / 2;
+    const ground1Y = centerY + size / 4;
+    
+    // Save active tool and set to ground node tool
+    const savedTool = activeTool;
+    activeTool = 'add-ground';
+    addGroundNode(ground1X, ground1Y);
+    
+    const ground2X = centerX + size / 2;
+    const ground2Y = centerY + size / 4;
+    addGroundNode(ground2X, ground2Y);
+    
+    // Add movable nodes
+    activeTool = 'add-node';
+    const node1X = centerX - size / 2;
+    const node1Y = centerY - size / 6;
+    addSimpleNode(node1X, node1Y);
+    
+    const node2X = centerX + size / 2;
+    const node2Y = centerY - size / 3;
+    addSimpleNode(node2X, node2Y);
+
+    const node3X = centerX + size / 8;
+    const node3Y = centerY - size / 1.5;
+    addSimpleNode(node3X, node3Y);
+    
+    // Restore original tool
+    activeTool = savedTool;
+    
+    console.log("Nodes created, now creating links...");
+    
+    // Now create links between them using a short delay to ensure nodes are created
+    setTimeout(() => {
+        try {
+            // Get all nodes 
+            const nodes = document.querySelectorAll('.node');
+            
+            if (nodes.length < 4) {
+                console.error("Not enough nodes to create four-bar mechanism");
+                return;
+            }
+            
+            // Create links (using the nodes in order they were created)
+            const ground1 = nodes[0];
+            const ground2 = nodes[1];
+            const node1 = nodes[2];
+            const node2 = nodes[3];
+            const node3 = nodes[4];
+            
+            // Link ground1 to node1
+            activeTool = 'add-link';
+            edgeDrawing = true;
+            activeEdgeStartNode = ground1;
+            endEdgeDrawing(node1);
+            
+            // Link node1 to node2
+            edgeDrawing = true;
+            activeEdgeStartNode = node1;
+            endEdgeDrawing(node2);
+            
+            // Link node2 to ground2
+            edgeDrawing = true;
+            activeEdgeStartNode = node2;
+            endEdgeDrawing(ground2);
+
+            // Link node2 to node3
+            edgeDrawing = true;
+            activeEdgeStartNode = node2;
+            endEdgeDrawing(node3);
+
+            // Link node3 to node1
+            edgeDrawing = true;
+            activeEdgeStartNode = node3;
+            endEdgeDrawing(node1);
+            
+            // Set the first link as motor (ground1 to node1)
+            const links = document.querySelectorAll('.link');
+            if (links.length > 0) {
+                const firstLink = links[0];
+                activeTool = 'select-motor';
+                handleEdgeClick(firstLink);
+            }
+            
+            // Set the last movable node as target
+            if (node2) {
+                activeTool = 'select-target';
+                setTargetNode(node3);
+            }
+            
+            // Restore active tool
+            activeTool = null;
+            
+            // Add to history and update DOF
+            addToHistory();
+            updateDOF();
+            updateStatusMessage('Four-bar mechanism created. Ready to simulate or modify.');
+            console.log("Four-bar mechanism creation complete");
+        } catch (error) {
+            console.error("Error creating four-bar mechanism:", error);
+        }
+    }, 100); // Slightly longer delay to ensure nodes are created and registered
+}
+
 // Initialize the application
 function init() {
     bindToolButtons();
@@ -49,8 +174,12 @@ function init() {
     setupMobileControls();
     setupSimulationControls();
     
+    
     // Add first operation to history (empty canvas)
     addToHistory();
+    // Create initial four-bar mechanism
+    createInitialFourBar();
+    
     
     updateStatusMessage('Ready to design! Select a tool to start.');
 }
