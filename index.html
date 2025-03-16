@@ -175,6 +175,45 @@
                 </div>
                 <div class="tool-name-display">Select a tool</div>
             </div>
+            <!-- Challenge Panel -->
+            <div id="challenge-panel" class="challenge-panel">
+                <div id="challenge-tab" class="challenge-tab">
+                    <i class="fas fa-trophy"></i>
+                    <span>Challenge</span>
+                    <i class="fas fa-chevron-left collapse-icon"></i>
+                </div>
+                <div class="challenge-content">
+                    <div class="challenge-header">
+                        <h3>Curve Matching Challenge</h3>
+                    </div>
+                    <div class="challenge-canvas-container">
+                        <svg id="challenge-canvas" width="100%" height="100%">
+                            
+                        </svg>
+                        <div class="challenge-canvas-label">Target Curve</div>
+                    </div>
+                    <div class="challenge-controls">
+                        <div class="challenge-level-select">
+                            <label for="challenge-level">Level:</label>
+                            <select id="challenge-level">
+
+                            </select>
+                        </div>
+                        <div class="challenge-buttons">
+                            <button id="evaluate-challenge" class="challenge-btn">
+                                <i class="fas fa-check-circle"></i> Evaluate
+                            </button>
+                            <button id="clear-attempt" class="challenge-btn">
+                                <i class="fas fa-trash"></i> Clear
+                            </button>
+                        </div>
+                        <div class="challenge-score">
+                            <span>Score: </span>
+                            <span id="challenge-score-value">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     

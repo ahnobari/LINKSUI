@@ -1,0 +1,1191 @@
+/* Modern Linkage Designer CSS */
+:root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #ebebec;
+    --bg-tertiary: #bbc0c6;
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --accent-primary: #0d6efd;
+    --accent-secondary: #6610f2;
+    --accent-tertiary: #0dcaf0;
+    --success: #198754;
+    --warning: #ffc107;
+    --danger: #dc3545;
+    --sidebar-width: 250px;
+    --border-radius: 8px;
+    --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+    --path-color: #006ed5;          /* Default path color for all nodes */
+    --motor-path-color: #ffc107;     /* Motor node path color */
+    --target-path-color: #ff9900;    /* Target node path color */
+    --real-vh: 100vh;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-primary: #212529;
+        --bg-secondary: #343a40;
+        --bg-tertiary: #495057;
+        --text-primary: #f8f9fa;
+        --text-secondary: #adb5bd;
+        --accent-primary: #3d8bfd;
+        --accent-secondary: #8540f5;
+        --accent-tertiary: #3dd5f3;
+    }
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    height: 100%;
+    overflow: hidden;
+}
+
+.app-container {
+    display: flex;
+    height: --real-vh;
+    width: 100vw;
+}
+
+/* Sidebar Styling */
+.sidebar {
+    width: var(--sidebar-width);
+    background-color: var(--bg-secondary);
+    border-right: 1px solid var(--bg-tertiary);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-y: auto;
+    z-index: 10;
+}
+
+.sidebar-header {
+    padding: 20px;
+    text-align: center;
+    border-bottom: 1px solid var(--bg-tertiary);
+}
+
+.sidebar-header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.tools {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+}
+
+.tool-section {
+    margin-bottom: 20px;
+}
+
+.tool-section h3 {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--bg-tertiary);
+}
+
+.tool-btn {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 5px;
+    border: none;
+    background-color: transparent;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    color: var(--text-primary);
+    font-family: inherit;
+    transition: var(--transition);
+}
+
+.tool-btn i {
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+}
+
+.tool-btn:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.tool-btn.active {
+    background-color: var(--accent-primary);
+    color: white;
+}
+
+.tool-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.sidebar-footer {
+    padding: 15px;
+    border-top: 1px solid var(--bg-tertiary);
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.dof-display {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+/* Main Canvas Area */
+.main-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+}
+
+#canvas-container {
+    flex: 1;
+    background-color: var(--bg-primary);
+    position: relative;
+    overflow: hidden;
+}
+
+#linkage-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+#nodes-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none; /* Let events pass through to SVG */
+}
+
+.status-bar {
+    height: 30px;
+    background-color: var(--bg-secondary);
+    border-top: 1px solid var(--bg-tertiary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 15px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    z-index: 1000;
+}
+
+/* Node Styling */
+.node {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    margin-left: -15px; /* Center the node */
+    margin-top: -15px;  /* Center the node */
+    border-radius: 50%;
+    background-color: var(--accent-primary);
+    border: 2px solid white;
+    box-shadow: var(--box-shadow);
+    cursor: move;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    pointer-events: auto;
+    transition: transform 0.1s ease;
+    z-index: 10;
+}
+
+.node.ground {
+    background-color: var(--danger);
+}
+
+.node.target {
+    border: 3px solid var(--warning);
+}
+
+.node:hover {
+    transform: scale(1.1);
+}
+
+/* Link Styling */
+.link {
+    stroke: var(--text-primary);
+    stroke-width: 3;
+    transition: stroke 0.3s ease;
+    cursor: pointer;
+    stroke-linecap: round;
+}
+
+/* This is the invisible touch/click area */
+.link-hitbox {
+    stroke: transparent;
+    stroke-width: 20; /* Much wider than visible line */
+    pointer-events: stroke; /* Only detect clicks on the stroke */
+    cursor: pointer;
+}
+
+.link.motor {
+    stroke: var(--warning);
+    stroke-dasharray: 5, 3;
+}
+
+/* Fix for hover visualization - target both the link itself and links within the same group as a hovered hitbox */
+.link:hover,
+.link-hitbox:hover ~ .link,
+g:hover > .link {
+    stroke: var(--accent-primary);
+}
+
+/* For motor links */
+.link.motor:hover,
+.link-hitbox:hover ~ .link.motor,
+g:hover > .link.motor {
+    stroke: var(--accent-tertiary);
+}
+
+/* Modal Styling */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: var(--bg-primary);
+    margin: 15% auto;
+    padding: 20px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    width: 80%;
+    max-width: 500px;
+}
+
+.close-modal {
+    color: var(--text-secondary);
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.modal-btn {
+    padding: 8px 16px;
+    margin-left: 10px;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    background-color: var(--accent-primary);
+    color: white;
+    transition: var(--transition);
+}
+
+.modal-btn:hover {
+    background-color: var(--accent-secondary);
+}
+
+/* Cursor styles based on active tool */
+body.add-ground {
+    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="%23dc3545"><circle cx="12" cy="12" r="10" stroke="black" stroke-width="2" fill-opacity="0.5"/></svg>') 12 12, auto;
+}
+
+body.add-node {
+    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="%230d6efd"><circle cx="12" cy="12" r="10" stroke="black" stroke-width="2" fill-opacity="0.5"/></svg>') 12 12, auto;
+}
+
+body.add-link {
+    cursor: crosshair;
+}
+
+body.move-tool {
+    cursor: move;
+}
+
+body.delete-tool {
+    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="%23dc3545"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>') 12 12, auto;
+}
+
+body.select-motor, body.select-target {
+    cursor: pointer;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .app-container {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 200px;
+    }
+    
+    .tools {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    
+    .tool-section {
+        margin-right: 20px;
+        flex: 1;
+        min-width: 150px;
+    }
+    
+    .sidebar-footer {
+        display: flex;
+        justify-content: space-between;
+    }
+}
+
+/* Mobile Corner Controller */
+.mobile-controls {
+    display: none; /* Hidden by default, shown on small screens */
+    position: fixed;
+    bottom: 40px;
+    right: 10px;
+    z-index: 100;
+  }
+  
+  .mobile-controls-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 5px;
+    background-color: rgba(var(--bg-secondary-rgb), 0.8);
+    border-radius: 10px;
+    padding: 5px;
+    backdrop-filter: blur(5px);
+    box-shadow: var(--box-shadow);
+  }
+  
+  .mobile-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .mobile-btn.active {
+    background-color: var(--accent-primary);
+    color: white;
+  }
+  
+  .tool-name-display {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    padding: 8px 10px;
+    margin-top: 5px;
+    border-radius: 5px;
+    text-align: center;
+    font-size: 14px;
+    opacity: 0.9;
+    box-shadow: var(--box-shadow);
+  }
+  
+  /* Add RGB variants of your colors for transparency */
+  :root {
+    --bg-secondary-rgb: 248, 249, 250;
+    --bg-tertiary-rgb: 233, 236, 239;
+    --accent-teriary-rgb: 13, 202, 240;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-secondary-rgb: 52, 58, 64;
+      --bg-tertiary-rgb: 73, 80, 87;
+    }
+  }
+  
+  /* Media Query for Small Screens */
+  @media (max-width: 768px) {
+    .sidebar {
+      display: none; /* Hide the sidebar on small screens */
+    }
+    
+    .mobile-controls {
+      display: block; /* Show mobile controls on small screens */
+    }
+    
+    .app-container {
+      flex-direction: column;
+    }
+    
+    .main-area {
+      width: 100vw;
+      height: calc(100vh - 30px); /* Account for status bar */
+    }
+    
+    .status-bar {
+      height: 30px;
+      font-size: 12px;
+    }
+  }
+
+  .touch-feedback {
+    position: absolute;
+    background-color: var(--success);
+    color: white;
+    padding: 5px 10px;
+    border-radius: var(--border-radius);
+    z-index: 1000;
+    opacity: 0;
+    transform: translateY(0);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
+    pointer-events: none; /* Make sure it doesn't interfere with interactions */
+    text-align: center;
+    white-space: nowrap;
+}
+
+.touch-feedback.visible {
+    opacity: 1;
+    transform: translateY(-10px);
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 768px) {
+    .touch-feedback {
+        font-size: 12px;
+        padding: 4px 8px;
+    }
+}
+
+/* Simulation Panel Styles */
+.simulation-panel {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 10px 15px;
+    z-index: 50;
+    display: none; /* Hidden by default */
+    width: 80%;
+    max-width: 600px;
+}
+
+.simulation-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.sim-btn {
+    background-color: var(--bg-tertiary);
+    border: none;
+    border-radius: var(--border-radius);
+    padding: 8px 12px;
+    cursor: pointer;
+    color: var(--text-primary);
+    transition: var(--transition);
+}
+
+.sim-btn:hover {
+    background-color: var(--accent-primary);
+    color: white;
+}
+
+.sim-btn.active {
+    background-color: var(--accent-primary);
+    color: white;
+}
+
+.sim-speed-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.sim-speed-control label {
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.sim-speed-control input {
+    flex: 1;
+    accent-color: var(--accent-primary);
+}
+
+.sim-info {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* Mobile Simulation Controls */
+.mobile-sim-controls {
+    position: fixed;
+    bottom: 40px;
+    right: 10px;
+    z-index: 100;
+    display: none; /* Hidden by default */
+}
+
+.mobile-sim-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: 5px;
+    background-color: rgba(var(--bg-secondary-rgb), 0.8);
+    border-radius: 10px;
+    padding: 5px;
+    backdrop-filter: blur(5px);
+    box-shadow: var(--box-shadow);
+}
+
+.mobile-sim-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-sim-btn.active {
+    background-color: var(--accent-primary);
+    color: white;
+}
+
+.mobile-sim-info {
+    background-color: var(--bg-secondary);
+    padding: 8px 10px;
+    margin-top: 5px;
+    border-radius: 5px;
+    font-size: 14px;
+    opacity: 0.9;
+    box-shadow: var(--box-shadow);
+}
+
+.mobile-sim-slider {
+    width: 100%;
+    margin-top: 5px;
+    accent-color: var(--accent-primary);
+}
+
+/* Simulation Mode Styling */
+body.simulation-mode .tool-btn:not(#simulate) {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+body.simulation-mode #simulate {
+    background-color: var(--accent-primary);
+    color: white;
+}
+
+/* Hide normal tools in simulation mode */
+body.simulation-mode .mobile-controls {
+    display: none;
+}
+
+/* Show appropriate simulation controls based on screen size */
+@media (min-width: 769px) {
+    body.simulation-mode .simulation-panel {
+        display: block;
+    }
+}
+
+@media (max-width: 768px) {
+    body.simulation-mode .mobile-sim-controls {
+        display: block;
+    }
+}
+
+/* Simulation Controls */
+.simulation-controls {
+    display: none;
+    position: absolute;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    padding: 10px;
+    box-shadow: var(--box-shadow);
+    z-index: 100;
+    opacity: 0;
+    
+}
+
+.simulation-controls.active {
+    display: flex;
+    opacity: 1;
+}
+
+.sim-controls-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sim-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background-color: var(--accent-primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.sim-btn:hover {
+    background-color: var(--accent-secondary);
+    transform: scale(1.05);
+}
+
+.sim-btn.exit-btn {
+    background-color: var(--danger);
+}
+
+.sim-speed-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.sim-speed-slider {
+    width: 100px;
+    cursor: pointer;
+}
+
+/* Button states */
+.sim-btn.paused .fa-pause:before {
+    content: "\f04b"; /* Switch to play icon */
+}
+
+.sim-btn.playing .fa-play:before {
+    content: "\f04c"; /* Switch to pause icon */
+}
+
+/* Body state for simulation mode */
+body.simulation-mode {
+    cursor: default !important;
+}
+
+body.simulation-mode .node {
+    cursor: default;
+}
+
+/* Responsive adjustments for simulation controls */
+@media (max-width: 1000px) {
+    .simulation-controls {
+        bottom: 50px; /* Position above mobile controls */
+        width: 90%;
+        max-width: 400px;
+    }
+    
+    .sim-controls-container {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .sim-speed-container {
+        width: 100%;
+        justify-content: center;
+        margin-top: 10px;
+    }
+    
+    .sim-speed-slider {
+        width: 150px;
+    }
+}
+
+/* Animation for simulation mode transition */
+@keyframes simulationTransition {
+    0% { 
+        background-color: var(--bg-primary);
+    }
+    50% {
+        background-color: var(--accent-tertiary);
+        opacity: 0.2;
+    }
+    100% {
+        background-color: var(--bg-primary);
+    }
+}
+
+.simulation-transition {
+    animation: simulationTransition 0.5s ease;
+}
+
+.sim-position-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    margin-top: 5px;
+}
+
+.sim-position-slider {
+    width: 150px;
+    cursor: pointer;
+}
+
+#sim-position-display {
+    min-width: 40px;
+    text-align: right;
+}
+
+/* For responsive layout */
+@media (max-width: 768px) {
+    .sim-position-container {
+        width: 100%;
+        justify-content: center;
+        margin-top: 5px;
+    }
+    
+    .sim-position-slider {
+        width: 180px;
+    }
+}
+
+/* Add these styles to your existing CSS file */
+
+/* Mobile File Controls */
+.mobile-controls-file {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-gap: 5px;
+  margin-top: 5px;
+}
+
+.mobile-file-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-file-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-controls-file {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 5px;
+    background-color: rgba(var(--accent-teriary-rgb), 0.5);
+    border-radius: 10px;
+    padding: 5px;
+    backdrop-filter: blur(5psx);
+    box-shadow: var(--box-shadow);
+    margin-top: 5px;
+}
+
+/* Hide file buttons in simulation mode */
+body.simulation-mode .mobile-controls-file {
+  display: none;
+}
+
+.simulation-path {
+    pointer-events: none;
+    
+}
+
+body.simulation-mode .node:not(.ground) {
+    cursor: default;
+}
+
+.node.locked {
+    opacity: 0.3;
+    border-style: dashed;
+}
+
+.simulation-controls-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.simulation-path {
+    pointer-events: none;
+    
+}
+
+body.simulation-mode .node:not(.ground) {
+    cursor: default;
+}
+
+.node.locked {
+    opacity: 0.3;
+    border-style: dashed;
+}
+
+/* Path highlighting on hover */
+.node:hover + .simulation-path,
+.simulation-path:hover {
+    stroke-width: 4;
+    filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.7));
+    z-index: 5;
+}
+
+/* Trace for the target node */
+.simulation-path.target-path {
+    stroke-width: 3;
+    stroke-dasharray: none;
+    filter: drop-shadow(0 0 4px rgba(255, 102, 0, 0.5));
+}
+
+/* Locking indication */
+.simulation-lock-indicator {
+    fill: var(--danger);
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+/* Animation for the current position marker */
+@keyframes pulseMarker {
+    0% { r: 4; opacity: 0.7; }
+    50% { r: 6; opacity: 1; }
+    100% { r: 4; opacity: 0.7; }
+}
+
+.current-position-marker {
+    fill: white;
+    stroke: var(--accent-primary);
+    stroke-width: 2;
+    animation: pulseMarker 1s infinite;
+    filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.3));
+}
+
+/* Highlight active frame in simulation */
+.simulation-frame-highlight {
+    stroke: white;
+    stroke-width: 1;
+    fill: var(--accent-primary);
+    fill-opacity: 0.2;
+    pointer-events: none;
+}
+
+/* Simulation Path Styling */
+.simulation-path {
+    fill: none;
+    stroke: var(--path-color);
+    stroke-width: 2;
+    /* stroke-opacity: 0.7; */
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none; /* Don't interfere with user interactions */
+    
+}
+
+/* Target node path styling (bolder) */
+.simulation-path.target-path {
+    stroke: var(--target-path-color);
+    stroke-width: 3;
+    /* stroke-opacity: 0.9; */
+    stroke-dasharray: none;
+}
+
+/* Motor node path styling */
+.simulation-path.motor-path {
+    stroke: var(--motor-path-color);
+    stroke-width: 3;
+    /* stroke-opacity: 0.8; */
+    stroke-dasharray: 5, 3; /* Dashed line to match motor edge style */
+}
+
+/* Path group styling */
+#simulation-paths {
+    /* opacity: 0.8; */
+    mix-blend-mode: multiply; /* Make overlapping paths blend nicely */
+}
+
+/* Path styling during simulation play */
+.simulation-playing #simulation-paths {
+    opacity: 0.5; /* Fade paths when playing to focus on the moving mechanism */
+}
+
+/* Simulation mode indicator */
+/* body.simulation-mode #canvas-container {
+    background-color: var(--bg-secondary);
+} */
+
+/* Current position indicator styling */
+.current-position-marker {
+    fill: var(--accent-primary);
+    stroke: white;
+    stroke-width: 1;
+    pointer-events: none; /* Don't interfere with user interactions */
+    r: 3; /* Small circle */
+}
+
+.current-position-marker.target {
+    r: 5; /* Larger circle for target node */
+    fill: var(--warning);
+}
+
+/* Locking indicator */
+.locking-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: var(--danger);
+    color: white;
+    padding: 5px 10px;
+    border-radius: var(--border-radius);
+    font-size: 0.85rem;
+    opacity: 0;
+    
+    pointer-events: none;
+    box-shadow: var(--box-shadow);
+    z-index: 100;
+}
+
+.locking-indicator.visible {
+    opacity: 1;
+}
+
+/* Mobile Controls Toggle Button */
+.mobile-toggle {
+    position: fixed;
+    bottom: 305px;
+    right: 10px;
+    z-index: 101;
+    display: none; /* Hidden by default, shown on small screens */
+    transition: bottom 0.3s ease;
+  }
+  
+  .mobile-toggle button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--accent-primary);
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+  }
+  
+  .mobile-toggle button:hover {
+    background-color: var(--accent-secondary);
+  }
+  
+  .mobile-toggle button:active {
+    transform: scale(0.95);
+  }
+  
+  .mobile-toggle button.collapsed i {
+    transform: rotate(180deg);
+  }
+  
+  /* Animation for mobile controls */
+  .mobile-controls {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  
+  .simulation-controls {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  
+  .mobile-controls.collapsed {
+    transform: translateY(300px);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .simulation-controls.collapsed {
+    opacity: 0;
+    pointer-events: none;
+  }
+  
+  /* Show toggle button on small screens */
+  @media (max-width: 768px) {
+    .mobile-toggle {
+      display: block;
+    }
+}
+
+.mobile-toggle.collapsed {
+    bottom: 50px;
+}
+
+.tool-btn.preview-active {
+    background-color: var(--success);
+    color: white;
+}
+
+.mobile-btn.preview-active {
+    background-color: var(--success);
+    color: white;
+}
+
+/* Path styling for preview mode */
+.preview-path {
+    fill: none;
+    stroke: var(--path-color);
+    stroke-width: 2;
+    stroke-opacity: 0.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+}
+
+.preview-path.target-path {
+    stroke: var(--target-path-color);
+    stroke-width: 3;
+    stroke-opacity: 0.7;
+}
+
+.preview-path.motor-path {
+    stroke: var(--motor-path-color);
+    stroke-width: 3;
+    stroke-opacity: 0.6;
+    stroke-dasharray: 5, 3;
+}
+
+/* Preview mode indicator */
+.preview-mode-indicator {
+    position: absolute;
+    bottom: 40px;
+    right: 10px;
+    background-color: var(--success);
+    color: white;
+    padding: 5px 10px;
+    border-radius: var(--border-radius);
+    font-size: 0.85rem;
+    opacity: 0;
+    pointer-events: none;
+    box-shadow: var(--box-shadow);
+    z-index: 100;
+    transition: opacity 0.3s ease;
+}
+
+.preview-mode-indicator.visible {
+    opacity: 1;
+}
+
+/* For mobile, position preview indicator above controls */
+@media (max-width: 768px) {
+    .preview-mode-indicator {
+        bottom: 360px;
+    }
+    
+    .mobile-toggle.collapsed + .preview-mode-indicator {
+        bottom: 100px;
+    }
+}
+
+#quick-sim i {
+    color: var(--warning);
+}
+
+#quick-sim.active,
+.mobile-btn[data-tool="quick-sim"].active {
+    background-color: var(--warning);
+    color: white;
+}
+
+#quick-sim.active i,
+.mobile-btn[data-tool="quick-sim"].active i {
+    color: white;
+}
+
+/* Active quick sim styling */
+body.quick-sim-mode #canvas-container {
+    position: relative;
+}
+
+body.quick-sim-mode #canvas-container::after {
+    content: "Running quick simulation...";
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(var(--bg-secondary-rgb), 0.9);
+    color: var(--text-primary);
+    padding: 5px 15px;
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+    pointer-events: none;
+    z-index: 50;
+}
+
+/* Disable node dragging during quick sim */
+body.quick-sim-mode .node {
+    cursor: default;
+    pointer-events: none;
+}
+
+body.controls-disabled .mobile-btn:not([data-tool="quick-sim"]) {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Also disable mobile file controls during quick sim */
+body.quick-sim-mode .mobile-controls-file button,
+body.controls-disabled .mobile-controls-file button {
+    opacity: 0.5;
+    pointer-events: none;
+}

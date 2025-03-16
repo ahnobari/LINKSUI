@@ -1,6 +1,6 @@
 // Modern Linkage Designer JavaScript
-import { simulateMechanism, findPath, sortMechanism, solveMechanism } from './mechanismSolver.js';
-
+import { simulateMechanism } from './mechanismSolver.js';
+import { curves } from './curves.js';
 // Global variables
 let nodeCount = 0;
 let currentNodeId = 0;
@@ -33,6 +33,8 @@ let quickSimStartAngle = 0;
 let quickSimAnimationId = null;
 let quickSimCompleted = false;
 let savedTool = null;
+
+let isPanelOpen = true;
 
 // DOM Elements
 const canvas = document.getElementById('linkage-canvas');
@@ -195,6 +197,7 @@ function init() {
     setViewportHeight();
     setupMobileToggle();
     QuickSimSetup();
+    initChallenge();
     document.getElementById('toggle-preview').addEventListener('click', togglePreviewMode);
     // Add first operation to history (empty canvas)
     addToHistory();
@@ -956,17 +959,17 @@ function drawSimulationPaths(positions, locking) {
             const isValidPoint = point && !isNaN(point[0]) && !isNaN(point[1]);
             
             if (isValidPoint && !locking[frameIndex]) {
-            // Start new path if we don't have one
-            if (currentPath === "") {
-                currentPath = `M${point[0]},${point[1]} `;
-            } else {
-                currentPath += `L${point[0]},${point[1]} `;
-            }
-            validPoints++;
+                // Start new path if we don't have one
+                if (currentPath === "") {
+                    currentPath = `M${point[0]},${point[1]} `;
+                } else {
+                    currentPath += `L${point[0]},${point[1]} `;
+                }
+                validPoints++;
             } else if (currentPath !== "") {
-            // End current path segment and add to total path
-            pathData += currentPath;
-            currentPath = "";
+                // End current path segment and add to total path
+                pathData += currentPath;
+                currentPath = "";
             }
         });
         
@@ -992,6 +995,10 @@ function drawSimulationPaths(positions, locking) {
             
             if (targetNode && nodeId === targetNode.id) {
                 pathElement.classList.add('target-path');
+                // Make sure we don't override the CSS class with inline styles
+                // Remove any inline styles that might be overriding colors
+                pathElement.style.removeProperty('stroke');
+                pathElement.style.removeProperty('stroke-opacity');
             }
             
             // Add to the group
@@ -1844,7 +1851,7 @@ function drawTempTargetPath(positions, lockingFrames, targetNode) {
     nodes.forEach(node => {
         // Create path for this node
         const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        pathElement.classList.add('simulation-path');
+        pathElement.classList.add('simulation-path'); // Use simulation-path class for all paths
         
         // Get node's numeric ID
         const nodeId = parseInt(node.id.substring(4));
@@ -1881,7 +1888,9 @@ function drawTempTargetPath(positions, lockingFrames, targetNode) {
         if (validPoints > 0) {
             pathElement.setAttribute('d', pathData);
             pathElement.setAttribute('data-node-id', node.id);
-            pathElement.style.strokeOpacity = '1.0'; // More transparent during move
+            
+            // Remove any inline opacity that might override CSS
+            pathElement.style.removeProperty('stroke-opacity');
             
             // Add appropriate classes
             if (motorNodes.includes(node.id)) {
@@ -1889,6 +1898,8 @@ function drawTempTargetPath(positions, lockingFrames, targetNode) {
             }
             if (node === targetNode) {
                 pathElement.classList.add('target-path');
+                // Make sure we don't override the CSS class with inline styles
+                pathElement.style.removeProperty('stroke');
             }
             
             // Add to group
@@ -2723,7 +2734,7 @@ function drawTracedPaths() {
         
         // Create path element
         const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        pathElement.classList.add('simulation-path');
+        pathElement.classList.add('simulation-path'); // Use simulation-path class for consistency
         
         // Generate path data
         let pathData = `M${points[0][0]},${points[0][1]} `;
@@ -2740,6 +2751,9 @@ function drawTracedPaths() {
         }
         if (node === targetNode) {
             pathElement.classList.add('target-path');
+            // Make sure we don't override the CSS class with inline styles
+            pathElement.style.removeProperty('stroke');
+            pathElement.style.removeProperty('stroke-opacity');
         }
         
         // Add to group
@@ -2810,6 +2824,513 @@ function endQuickSim() {
     // We'll keep the traced paths visible until the next simulation or modification
     
     updateStatusMessage('Quick simulation complete. Paths will remain visible until the mechanism is modified.');
+}
+
+// Challenge Feature 
+function initChallenge() {
+    const challengePanel = document.getElementById('challenge-panel');
+    const challengeTab = document.getElementById('challenge-tab');
+    const challengeLevel = document.getElementById('challenge-level');
+    const evaluateBtn = document.getElementById('evaluate-challenge');
+    const clearBtn = document.getElementById('clear-attempt');
+    
+    let isPanelOpen = true;
+    
+    // Function to toggle panel state
+    function toggleChallengePanel() {
+        isPanelOpen = !isPanelOpen;
+        
+        if (isPanelOpen) {
+            challengePanel.classList.remove('collapsed');
+        } else {
+            challengePanel.classList.add('collapsed');
+        }
+        
+        // Save state to localStorage
+        localStorage.setItem('challengePanelOpen', isPanelOpen);
+    }
+    
+    // Event listeners
+    challengeTab.addEventListener('click', toggleChallengePanel);
+    
+    // Level change handler
+    challengeLevel.addEventListener('change', (e) => {
+        updateStatusMessage(`Challenge level selected: ${e.target.options[e.target.selectedIndex].text}`);
+        loadChallengeCurve(e.target.value);
+    });
+    
+    // Button click handlers - Using the real evaluation functionality
+    evaluateBtn.addEventListener('click', evaluateChallenge);
+    
+    // Use real clear functionality
+    clearBtn.addEventListener('click', clearChallengeAttempt);
+    
+    // Check local storage for panel state preference
+    const savedState = localStorage.getItem('challengePanelOpen');
+    if (savedState === 'false') {
+        isPanelOpen = false;
+        challengePanel.classList.add('collapsed');
+    }
+
+    // add options to challenge level from curves
+    const challenge_titles = Object.keys(curves);
+    challenge_titles.forEach(title => {
+        const option = document.createElement('option');
+        option.value = title;
+        option.textContent = title;
+        challengeLevel.appendChild(option);
+    });
+
+    challengeLevel.selectedIndex = 0;
+    loadChallengeCurve(challenge_titles[0]);
+}
+
+function clearChallenge() {
+    const challengeScore = document.getElementById('challenge-score-value');
+    challengeScore.textContent = '-';
+
+    const challengeCanvas = document.getElementById('challenge-canvas');
+    challengeCanvas.innerHTML = '';
+}
+
+function loadChallengeCurve(title) {
+    // Clear any existing solution curve
+    clearSolutionCurve();
+    
+    // Clear the score
+    document.getElementById('challenge-score-value').textContent = '-';
+    
+    // Clear and redraw the challenge canvas
+    const challengeCanvas = document.getElementById('challenge-canvas');
+    challengeCanvas.innerHTML = '';
+    
+    const curvePoints = curves[title];
+    const curvePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    curvePath.classList.add('challenge-curve');
+    
+    const canvasWidth = challengeCanvas.clientWidth;
+    const canvasHeight = challengeCanvas.clientHeight;
+
+    // find the scale and offset to fit the curve in the canvas
+    const normalizedCurve = normalizeCurveForRendering(curvePoints, canvasWidth, canvasHeight);
+
+    let pathData = `M${normalizedCurve[0][0]},${normalizedCurve[0][1]} `;
+    for (let i = 1; i < normalizedCurve.length; i++) {
+        pathData += `L${normalizedCurve[i][0]},${normalizedCurve[i][1]} `;
+    }
+
+    curvePath.setAttribute('d', pathData);
+    curvePath.classList.add('target-curve');
+    challengeCanvas.appendChild(curvePath);
+}
+
+function normalizeCurveForRendering(curve, canvasWidth, canvasHeight) {
+    // Find dimensions of target curve
+    const xValues = curve.map(point => point[0]);
+    const yValues = curve.map(point => point[1]);
+    const xMin = Math.min(...xValues);
+    const xMax = Math.max(...xValues);
+    const yMin = Math.min(...yValues);
+    const yMax = Math.max(...yValues);
+    const xRange = xMax - xMin;
+    const yRange = yMax - yMin;
+    
+    // Find dimensions of canvas
+    const xScale = canvasWidth / xRange;
+    const yScale = canvasHeight / yRange;
+    const scale = Math.min(xScale, yScale) * 0.9;
+    const xOffset = (canvasWidth - xRange * scale) / 2;
+    const yOffset = (canvasHeight - yRange * scale) / 2;
+    
+    // Normalize curve points
+    return curve.map(point => [(point[0] - xMin) * scale + xOffset, (point[1] - yMin) * scale + yOffset]);
+}
+
+function procrustesAnalysis(curve) {
+    // Find the centroid of the curve
+    const MeanX = curve.reduce((acc, point) => acc + point[0], 0) / curve.length;
+    const MeanY = curve.reduce((acc, point) => acc + point[1], 0) / curve.length;
+
+    const RMSRadius = Math.sqrt(curve.reduce((acc, point) => acc + Math.pow(point[0] - MeanX, 2) + Math.pow(point[1] - MeanY, 2), 0) / curve.length);
+
+    return [MeanX, MeanY, RMSRadius];
+}
+
+function applyProcrustesAnalysis(curve, TargetMeanX, TargetMeanY, TargetRMSRadius) {
+    const [MeanX, MeanY, RMSRadius] = procrustesAnalysis(curve);
+
+    const scaledCurve = curve.map(point => {
+        const x = TargetMeanX + (point[0] - MeanX) * (TargetRMSRadius / RMSRadius);
+        const y = TargetMeanY + (point[1] - MeanY) * (TargetRMSRadius / RMSRadius);
+        return [x, y];
+    });
+
+    return scaledCurve;
+}
+
+// Challenge evaluation functionality
+function evaluateChallenge() {
+    // run a quick simulation and wait for it to finish animating
+    startQuickSim();
+    const time_out_fn = () => {
+        if (quickSimMode) { setTimeout(time_out_fn, 100); } else { evaluateChallengeAfterSim(); }};
+    
+    setTimeout(time_out_fn, 100);
+}
+function evaluateChallengeAfterSim() {
+    // Get current selected challenge
+    const challengeLevel = document.getElementById('challenge-level').value;
+    const targetCurve = curves[challengeLevel];
+    
+    if (!targetCurve || !targetNode) {
+        showModal('Evaluation Error', 'A target node must be selected to evaluate the challenge.');
+        return;
+    }
+    
+    // Clear any existing solution curve
+    clearSolutionCurve();
+    
+    // Run a quick simulation to get the traced path
+    const state = getMechanismState();
+    
+    // Check minimum requirements for simulation
+    if (state.nodes.length < 2 || state.edges.length < 1) {
+        showModal('Evaluation Error', 'Cannot evaluate: No mechanism defined. Please add nodes and links first.');
+        return;
+    }
+    
+    // Check for motor edge
+    if (!motorEdge) {
+        showModal('Evaluation Error', 'Motor edge must be defined to evaluate the challenge.');
+        return;
+    }
+    
+    // Run simulation with 360 steps for high precision
+    try {
+        const simulation = simulateMechanism(state, 360);
+        
+        // If simulation is valid, draw target path
+        if (simulation.isValid) {
+            // Extract target node path
+            const targetNodeId = parseInt(targetNode.id.substring(4));
+            const targetPath = extractTargetPath(simulation.positions, simulation.lockingFrames, targetNodeId);
+            
+            // Draw solution on challenge canvas
+            const score = drawSolutionCurve(targetPath, targetCurve);
+            
+            // Calculate and display score
+            document.getElementById('challenge-score-value').textContent = `${score}`;
+            
+            updateStatusMessage(`Challenge evaluated: Score ${score}%`);
+        } else {
+            showModal('Evaluation Error', 'Mechanism is not valid for evaluation. Ensure it has 1 DOF and is dyadic.');
+            return;
+        }
+    } catch (error) {
+        console.error('Challenge evaluation error:', error);
+        showModal('Evaluation Error', 'An error occurred during evaluation. Please check the mechanism.');
+        return;
+    }
+}
+
+// Extract target node path from simulation results
+function extractTargetPath(positions, lockingFrames, targetNodeId) {
+    const path = [];
+    
+    // Skip frames where mechanism is locking
+    positions.forEach((frame, index) => {
+        if (!lockingFrames[index]) {
+            const position = frame[targetNodeId];
+            if (position && !isNaN(position[0]) && !isNaN(position[1])) {
+                path.push([position[0], position[1]]);
+            }
+        }
+    });
+    
+    return path;
+}
+
+function findOptimalRotation(curve, targetCurve) {
+    let bestAngle = 0;
+
+    const [MeanX, MeanY, RMSRadius] = procrustesAnalysis(targetCurve);
+    let offsetedCurve = applyProcrustesAnalysis(curve, 0, 0, RMSRadius);
+    let rotatedCurve = null;
+    let bestDistance = chamferDistance(curve, targetCurve);
+    for (let angle = 0; angle < 360; angle++) {
+        rotatedCurve = rotateCurve(offsetedCurve, angle);
+        rotatedCurve = applyProcrustesAnalysis(rotatedCurve, MeanX, MeanY, RMSRadius);
+        const distance = chamferDistance(rotatedCurve, targetCurve);
+        if (distance < bestDistance) {
+            bestDistance = distance;
+            bestAngle = angle;
+        }
+    }
+    return [applyProcrustesAnalysis(rotateCurve(offsetedCurve, bestAngle), MeanX, MeanY, RMSRadius), bestDistance];
+}
+
+function rotateCurve(curve, angle) {
+    const angleRad = angle * Math.PI / 180;
+    return curve.map(point => {
+        const x = point[0] * Math.cos(angleRad) - point[1] * Math.sin(angleRad);
+        const y = point[0] * Math.sin(angleRad) + point[1] * Math.cos(angleRad);
+        return [x, y];
+    });
+}
+
+function chamferDistance(curve1, curve2) {
+    let d1 = 0;
+    let d2 = 0;
+
+    for (let i = 0; i < curve1.length; i++) {
+        let minDistance = Number.MAX_VALUE;
+        for (let j = 0; j < curve2.length; j++) {
+            const distance = Math.sqrt(Math.pow(curve1[i][0] - curve2[j][0], 2) + Math.pow(curve1[i][1] - curve2[j][1], 2));
+            if (distance < minDistance) {
+                minDistance = distance;
+            }
+        }
+        d1 += minDistance;
+    }
+
+    for (let i = 0; i < curve2.length; i++) {
+        let minDistance = Number.MAX_VALUE;
+        for (let j = 0; j < curve1.length; j++) {
+            const distance = Math.sqrt(Math.pow(curve2[i][0] - curve1[j][0], 2) + Math.pow(curve2[i][1] - curve1[j][1], 2));
+            if (distance < minDistance) {
+                minDistance = distance;
+            }
+        }
+        d2 += minDistance;
+    }
+
+    return (d1 + d2) / (curve1.length + curve2.length);
+}
+
+// Draw the solution curve on challenge canvas
+function drawSolutionCurve(solutionPath, targetCurve) {
+    const challengeCanvas = document.getElementById('challenge-canvas');
+    const canvasWidth = challengeCanvas.clientWidth;
+    const canvasHeight = challengeCanvas.clientHeight;
+    
+    // Scale and normalize the solution path to match target curve scale
+    const normalizedTarget = normalizeCurveForRendering(targetCurve, canvasWidth, canvasHeight);
+    const [targetMeanX, targetMeanY, targetRMSRadius] = procrustesAnalysis(normalizedTarget);
+    const NormalizedPath = applyProcrustesAnalysis(solutionPath, targetMeanX, targetMeanY, targetRMSRadius);
+    const [scaledPath, score] = findOptimalRotation(NormalizedPath, normalizedTarget);
+    
+    // Create solution path element
+    const solutionElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    solutionElement.id = 'solution-curve';
+    solutionElement.classList.add('solution-curve');
+    
+    // Generate path data
+    let pathData = '';
+    if (scaledPath.length > 0) {
+        pathData = `M${scaledPath[0][0]},${scaledPath[0][1]} `;
+        for (let i = 1; i < scaledPath.length; i++) {
+            pathData += `L${scaledPath[i][0]},${scaledPath[i][1]} `;
+        }
+    }
+    
+    solutionElement.setAttribute('d', pathData);
+    challengeCanvas.appendChild(solutionElement);
+
+    return Math.round((0.5-score/targetRMSRadius)**2 * 100 * 4);
+}
+
+// Scale path to match target curve dimensions
+function scalePath(path, targetCurve, canvasWidth, canvasHeight) {
+    if (path.length === 0) return [];
+    
+    // Find dimensions of target curve
+    const targetXValues = targetCurve.map(point => point[0]);
+    const targetYValues = targetCurve.map(point => point[1]);
+    const targetXMin = Math.min(...targetXValues);
+    const targetXMax = Math.max(...targetXValues);
+    const targetYMin = Math.min(...targetYValues);
+    const targetYMax = Math.max(...targetYValues);
+    const targetXMean = targetXValues.reduce((a, b) => a + b) / targetXValues.length;
+    const targetYMean = targetYValues.reduce((a, b) => a + b) / targetYValues.length;
+    const targetRMS = Math.sqrt((targetXValues.reduce((a,b) => a + Math.pow(b - targetXMean,2)) + targetYValues.reduce((a,b) => a + Math.pow(b - targetYMean,2))) / targetXValues.length);
+    const targetXRange = targetXMax - targetXMin;
+    const targetYRange = targetYMax - targetYMin;
+    
+    // Find dimensions of solution path
+    const pathXValues = path.map(point => point[0]);
+    const pathYValues = path.map(point => point[1]);
+    const pathXMin = Math.min(...pathXValues);
+    const pathXMax = Math.max(...pathXValues);
+    const pathYMin = Math.min(...pathYValues);
+    const pathYMax = Math.max(...pathYValues);
+    const pathXMean = pathXValues.reduce((a, b) => a + b) / pathXValues.length;
+    const pathYMean = pathYValues.reduce((a, b) => a + b) / pathYValues.length;
+    const pathRMS = Math.sqrt((pathXValues.reduce((a,b) => a + Math.pow(b - pathXMean,2)) + pathYValues.reduce((a,b) => a + Math.pow(b - pathYMean,2))) / pathXValues.length);
+    const pathXRange = pathXMax - pathXMin;
+    const pathYRange = pathYMax - pathYMin;
+    
+    // Calculate scale factor (same scale used when loading the challenge curve)
+    const targetScale = Math.min(canvasWidth / targetXRange, canvasHeight / targetYRange) * 0.9;
+    const xOffset = (canvasWidth - targetXRange * targetScale) / 2;
+    const yOffset = (canvasHeight - targetYRange * targetScale) / 2;
+    
+    // Scale solution path to match target curve size and position
+    return path.map(point => [
+        (point[0] + targetXMean - pathXMean - targetXMin) * (targetRMS / pathRMS) * targetScale + xOffset ,
+        (point[1] + targetYMean - pathYMean - targetYMin) * (targetRMS / pathRMS) * targetScale + yOffset
+    ]);
+}
+
+// Calculate score based on similarity between solution and target
+function calculateScore(solutionPath, targetCurve) {
+    if (solutionPath.length === 0) return 0;
+    
+    // Normalize both paths to 0-100 range for comparison
+    const normalizedSolution = normalizePath(solutionPath);
+    const normalizedTarget = normalizePath(targetCurve);
+    
+    // Resample both paths to have the same number of points
+    const numSamples = 100;
+    const sampledSolution = resamplePath(normalizedSolution, numSamples);
+    const sampledTarget = resamplePath(normalizedTarget, numSamples);
+    
+    // Calculate average distance between corresponding points
+    let totalDistance = 0;
+    for (let i = 0; i < numSamples; i++) {
+        const distance = getDistance(
+            sampledSolution[i][0], sampledSolution[i][1],
+            sampledTarget[i][0], sampledTarget[i][1]
+        );
+        totalDistance += distance;
+    }
+    
+    const avgDistance = totalDistance / numSamples;
+    
+    // Convert to score (100% means perfect match, 0% means far off)
+    // Max possible distance is √(2) in normalized 0-1 space, or ~141.4 in 0-100 space
+    const maxDistance = 141.4;
+    let score = Math.max(0, 100 - (avgDistance / maxDistance) * 100);
+    
+    // Add shape similarity penalty
+    // Calculate area ratio between the two paths
+    const solutionArea = calculatePathArea(sampledSolution);
+    const targetArea = calculatePathArea(sampledTarget);
+    const areaRatio = Math.min(solutionArea, targetArea) / Math.max(solutionArea, targetArea);
+    
+    // Apply area penalty
+    score = score * (0.7 + 0.3 * areaRatio);
+    
+    // Return rounded score
+    return Math.round(score);
+}
+
+// Normalize path to 0-1 range
+function normalizePath(path) {
+    const xValues = path.map(p => p[0]);
+    const yValues = path.map(p => p[1]);
+    
+    const xMin = Math.min(...xValues);
+    const xMax = Math.max(...xValues);
+    const yMin = Math.min(...yValues);
+    const yMax = Math.max(...yValues);
+    
+    const xRange = xMax - xMin;
+    const yRange = yMax - yMin;
+    
+    // Scale to 0-100 for better precision
+    return path.map(p => [
+        ((p[0] - xMin) / xRange) * 100,
+        ((p[1] - yMin) / yRange) * 100
+    ]);
+}
+
+// Resample path to have exactly n points
+function resamplePath(path, numSamples) {
+    if (path.length <= 1) return path;
+    
+    // Calculate total path length
+    let totalLength = 0;
+    const segments = [];
+    
+    for (let i = 0; i < path.length - 1; i++) {
+        const length = getDistance(path[i][0], path[i][1], path[i+1][0], path[i+1][1]);
+        totalLength += length;
+        segments.push({
+            start: i,
+            length: length
+        });
+    }
+    
+    // Resample at equal intervals
+    const sampledPath = [];
+    const intervalLength = totalLength / (numSamples - 1);
+    
+    sampledPath.push([...path[0]]); // First point
+    
+    let currentLength = 0;
+    let segmentIndex = 0;
+    let segmentPosition = 0;
+    
+    for (let i = 1; i < numSamples - 1; i++) {
+        const targetLength = i * intervalLength;
+        
+        // Find the segment containing this sample point
+        while (currentLength + segments[segmentIndex].length < targetLength) {
+            currentLength += segments[segmentIndex].length;
+            segmentIndex++;
+            segmentPosition = 0;
+        }
+        
+        // Calculate position within the segment
+        const segment = segments[segmentIndex];
+        const remainingLength = targetLength - currentLength;
+        const t = remainingLength / segment.length;
+        
+        // Interpolate
+        const p1 = path[segment.start];
+        const p2 = path[segment.start + 1];
+        
+        sampledPath.push([
+            p1[0] + (p2[0] - p1[0]) * t,
+            p1[1] + (p2[1] - p1[1]) * t
+        ]);
+    }
+    
+    sampledPath.push([...path[path.length - 1]]); // Last point
+    
+    return sampledPath;
+}
+
+// Calculate approximate area of a path using Shoelace formula
+function calculatePathArea(path) {
+    let area = 0;
+    for (let i = 0; i < path.length; i++) {
+        const j = (i + 1) % path.length;
+        area += path[i][0] * path[j][1];
+        area -= path[j][0] * path[i][1];
+    }
+    return Math.abs(area / 2);
+}
+
+// Clear the solution curve
+function clearSolutionCurve() {
+    const solutionCurve = document.getElementById('solution-curve');
+    if (solutionCurve) {
+        solutionCurve.remove();
+    }
+    
+    document.getElementById('challenge-score-value').textContent = '-';
+}
+
+// Function to clear challenge attempt
+function clearChallengeAttempt() {
+    // Clear score display
+    document.getElementById('challenge-score-value').textContent = '-';
+    
+    // Clear solution curve
+    clearSolutionCurve();
+    
+    updateStatusMessage('Challenge attempt cleared.');
 }
 
 // Initialize the application on window load
