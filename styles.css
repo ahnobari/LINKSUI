@@ -44,7 +44,7 @@ body {
     font-family: 'Inter', sans-serif;
     color: var(--text-primary);
     background-color: var(--bg-primary);
-    height: 100vh;
+    height: 100%;
     overflow: hidden;
 }
 
@@ -721,7 +721,7 @@ body.simulation-mode .node {
 }
 
 /* Responsive adjustments for simulation controls */
-@media (max-width: 768px) {
+@media (max-width: 1000px) {
     .simulation-controls {
         bottom: 110px; /* Position above mobile controls */
         width: 90%;
