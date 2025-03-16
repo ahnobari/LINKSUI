@@ -18,6 +18,7 @@
     --path-color: #006ed5;          /* Default path color for all nodes */
     --motor-path-color: #ffc107;     /* Motor node path color */
     --target-path-color: #ff9900;    /* Target node path color */
+    --real-vh: 100vh;
 }
 
 /* Dark mode support */
@@ -50,7 +51,7 @@ body {
 
 .app-container {
     display: flex;
-    height: 100vh;
+    height: --real-vh;
     width: 100vw;
 }
 

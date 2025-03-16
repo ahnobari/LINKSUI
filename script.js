@@ -40,6 +40,17 @@ const modalOkBtn = document.getElementById('modal-ok');
 const modalCancelBtn = document.getElementById('modal-cancel');
 const closeModal = document.querySelector('.close-modal');
 
+function setViewportHeight() {
+    // Get the actual viewport height
+    const vh = window.innerHeight;
+    
+    // Apply it directly to the app container
+    document.querySelector('.app-container').style.height = `${vh}px`;
+    
+    // Also set a CSS variable that can be used throughout your CSS
+    document.documentElement.style.setProperty('--real-vh', `${vh}px`);
+  }
+
 function createInitialFourBar() {
     console.log("Creating initial four-bar mechanism...");
     
@@ -173,7 +184,7 @@ function init() {
     setupModalEvents();
     setupMobileControls();
     setupSimulationControls();
-    
+    setViewportHeight();
     
     // Add first operation to history (empty canvas)
     addToHistory();
@@ -2200,3 +2211,15 @@ function getDistance(x1, y1, x2, y2) {
 
 // Initialize the application on window load
 window.onload = init;
+
+// Update on resize and orientation change
+window.addEventListener('resize', setViewportHeight);
+window.addEventListener('orientationchange', setViewportHeight);
+
+// For iOS Safari, also update when scrolling stops
+// (as address bar may show/hide during scroll)
+let scrollTimeout;
+window.addEventListener('scroll', function() {
+  clearTimeout(scrollTimeout);
+  scrollTimeout = setTimeout(setViewportHeight, 200);
+});
