@@ -725,7 +725,7 @@ body.simulation-mode .node {
 /* Responsive adjustments for simulation controls */
 @media (max-width: 1000px) {
     .simulation-controls {
-        bottom: 110px; /* Position above mobile controls */
+        bottom: 50px; /* Position above mobile controls */
         width: 90%;
         max-width: 400px;
     }
@@ -1050,8 +1050,17 @@ body:not(.simulation-mode) .simulation-path {
     transition: transform 0.3s ease, opacity 0.3s ease;
   }
   
+  .simulation-controls {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  
   .mobile-controls.collapsed {
     transform: translateY(300px);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .simulation-controls.collapsed {
     opacity: 0;
     pointer-events: none;
   }

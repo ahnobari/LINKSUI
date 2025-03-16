@@ -200,7 +200,8 @@ function setupMobileToggle() {
     const toggleBtn = document.getElementById('mobile-controls-toggle');
     const mobileControls = document.querySelector('.mobile-controls');
     const mobileControlsContainer = document.querySelector('.mobile-toggle');
-    
+    const simControls = document.getElementById('simulation-controls');
+
     // Check if there's a saved state in localStorage
     const isMobileControlsCollapsed = false;
     
@@ -209,6 +210,7 @@ function setupMobileToggle() {
         mobileControls.classList.add('collapsed');
         toggleBtn.classList.add('collapsed');
         mobileControlsContainer.classList.add('collapsed');
+        simControls.classList.add('collapsed');
     }
     
     toggleBtn.addEventListener('click', () => {
@@ -216,6 +218,7 @@ function setupMobileToggle() {
         mobileControls.classList.toggle('collapsed');
         toggleBtn.classList.toggle('collapsed');
         mobileControlsContainer.classList.toggle('collapsed');
+        simControls.classList.toggle('collapsed');
         
         // Save state to localStorage
         localStorage.setItem(
