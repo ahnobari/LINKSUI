@@ -2974,7 +2974,8 @@ function loadChallengeCurve(title) {
     const canvasHeight = challengeCanvas.clientHeight;
 
     // find the scale and offset to fit the curve in the canvas
-    const normalizedCurve = normalizeCurveForRendering(curvePoints, canvasWidth, canvasHeight);
+    const equidistantCurve = resampleCurveEquidistant(curvePoints, 200);
+    const normalizedCurve = normalizeCurveForRendering(equidistantCurve, canvasWidth, canvasHeight);
 
     let pathData = `M${normalizedCurve[0][0]},${normalizedCurve[0][1]} `;
     for (let i = 1; i < normalizedCurve.length; i++) {
@@ -2984,6 +2985,69 @@ function loadChallengeCurve(title) {
     curvePath.setAttribute('d', pathData);
     curvePath.classList.add('target-curve');
     challengeCanvas.appendChild(curvePath);
+}
+
+function resampleCurveEquidistant(curve, numPoints) {
+    if (curve.length < 2 || numPoints < 2) {
+      return curve.slice(); // Return copy of original curve if too few points
+    }
+    
+    // 1. Calculate cumulative distances along the curve
+    const cumulativeDistances = [0]; // Start with 0 for the first point
+    let totalDistance = 0;
+    
+    for (let i = 1; i < curve.length; i++) {
+      const dx = curve[i][0] - curve[i-1][0];
+      const dy = curve[i][1] - curve[i-1][1];
+      const segmentLength = Math.sqrt(dx*dx + dy*dy);
+      totalDistance += segmentLength;
+      cumulativeDistances.push(totalDistance);
+    }
+    
+    // 2. Create the resampled curve with equidistant points
+    const resampledCurve = [];
+    
+    for (let i = 0; i < numPoints; i++) {
+      // Calculate target distance for this point
+      const targetDistance = i * totalDistance / (numPoints - 1);
+      
+      // Handle edge cases
+      if (i === 0) {
+        resampledCurve.push([...curve[0]]);
+        continue;
+      }
+      
+      if (i === numPoints - 1) {
+        resampledCurve.push([...curve[curve.length - 1]]);
+        continue;
+      }
+      
+      // Find the segment that contains this distance
+      let segmentIndex = 0;
+      while (segmentIndex < cumulativeDistances.length - 1 && 
+             cumulativeDistances[segmentIndex + 1] < targetDistance) {
+        segmentIndex++;
+      }
+      
+      // Calculate the interpolation weight within the segment
+      const segmentStart = cumulativeDistances[segmentIndex];
+      const segmentEnd = cumulativeDistances[segmentIndex + 1];
+      const segmentLength = segmentEnd - segmentStart;
+      
+      // Avoid division by zero
+      const weight = segmentLength === 0 ? 0 : (targetDistance - segmentStart) / segmentLength;
+      
+      // Interpolate between the two points
+      const p1 = curve[segmentIndex];
+      const p2 = curve[segmentIndex + 1];
+      
+      resampledCurve.push([
+        p1[0] + weight * (p2[0] - p1[0]),
+        p1[1] + weight * (p2[1] - p1[1])
+      ]);
+    }
+    
+    return resampledCurve;
 }
 
 function normalizeCurveForRendering(curve, canvasWidth, canvasHeight) {
@@ -3176,9 +3240,11 @@ function drawSolutionCurve(solutionPath, targetCurve) {
     const canvasHeight = challengeCanvas.clientHeight;
     
     // Scale and normalize the solution path to match target curve scale
-    const normalizedTarget = normalizeCurveForRendering(targetCurve, canvasWidth, canvasHeight);
+    const equidistantTarget = resampleCurveEquidistant(targetCurve, 200);
+    const normalizedTarget = normalizeCurveForRendering(equidistantTarget, canvasWidth, canvasHeight);
     const [targetMeanX, targetMeanY, targetRMSRadius] = procrustesAnalysis(normalizedTarget);
-    const NormalizedPath = applyProcrustesAnalysis(solutionPath, targetMeanX, targetMeanY, targetRMSRadius);
+    const equidistantSolution = resampleCurveEquidistant(solutionPath, 200);
+    const NormalizedPath = applyProcrustesAnalysis(equidistantSolution, targetMeanX, targetMeanY, targetRMSRadius);
     const [scaledPath, score] = findOptimalRotation(NormalizedPath, normalizedTarget);
     
     // Create solution path element
@@ -3198,7 +3264,7 @@ function drawSolutionCurve(solutionPath, targetCurve) {
     solutionElement.setAttribute('d', pathData);
     challengeCanvas.appendChild(solutionElement);
 
-    return Math.round((0.5-score/targetRMSRadius)**2 * 100 * 4);
+    return Math.round((0.5-score/targetRMSRadius)**2 * 100 * 4) + 4;
 }
 
 // Scale path to match target curve dimensions

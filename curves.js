@@ -9,11 +9,11 @@ let curves = {
 let solutions = {
     "Level 1": {
       "nodes": [
-        {"id": 0, "x": 671, "y": 530, "isGround": true, "isTarget": false},
-        {"id": 1, "x": 366, "y": 526, "isGround": true, "isTarget": false},
-        {"id": 2, "x": 667, "y": 616, "isGround": false, "isTarget": false},
-        {"id": 3, "x": 361, "y": 686, "isGround": false, "isTarget": false},
-        {"id": 4, "x": 544, "y": 333, "isGround": false, "isTarget": true}
+        {"id": 0, "x": -671, "y": -530, "isGround": true, "isTarget": false},
+        {"id": 1, "x": -366, "y": -526, "isGround": true, "isTarget": false},
+        {"id": 2, "x": -667, "y": -616, "isGround": false, "isTarget": false},
+        {"id": 3, "x": -361, "y": -686, "isGround": false, "isTarget": false},
+        {"id": 4, "x": -544, "y": -333, "isGround": false, "isTarget": true}
       ],
       "edges": [
         {"nodeIds": [0, 2], "isMotor": true},
@@ -26,12 +26,12 @@ let solutions = {
     },
     "Level 2": {
       "nodes": [
-        {"id": 0, "x": 671, "y": 530, "isGround": true, "isTarget": false},
-        {"id": 1, "x": 366, "y": 526, "isGround": true, "isTarget": false},
-        {"id": 2, "x": 667, "y": 616, "isGround": false, "isTarget": false},
-        {"id": 3, "x": 361, "y": 686, "isGround": false, "isTarget": false},
-        {"id": 4, "x": 544, "y": 333, "isGround": false, "isTarget": false},
-        {"id": 5, "x": 369, "y": 393, "isGround": false, "isTarget": true}
+        {"id": 0, "x": -671, "y": -530, "isGround": true, "isTarget": false},
+        {"id": 1, "x": -366, "y": -526, "isGround": true, "isTarget": false},
+        {"id": 2, "x": -667, "y": -616, "isGround": false, "isTarget": false},
+        {"id": 3, "x": -361, "y": -686, "isGround": false, "isTarget": false},
+        {"id": 4, "x": -544, "y": -333, "isGround": false, "isTarget": false},
+        {"id": 5, "x": -369, "y": -393, "isGround": false, "isTarget": true}
       ],
       "edges": [
         {"nodeIds": [0, 2], "isMotor": true},
@@ -46,15 +46,15 @@ let solutions = {
     },
     "Level 3": {
       "nodes": [
-        {"id": 0, "x": 671, "y": 530, "isGround": true, "isTarget": false},
-        {"id": 1, "x": 366, "y": 524, "isGround": true, "isTarget": false},
-        {"id": 2, "x": 666, "y": 616, "isGround": false, "isTarget": false},
-        {"id": 3, "x": 361, "y": 686, "isGround": false, "isTarget": false},
-        {"id": 4, "x": 544, "y": 333, "isGround": false, "isTarget": false},
-        {"id": 5, "x": 369, "y": 393, "isGround": false, "isTarget": false},
-        {"id": 6, "x": 101, "y": 721, "isGround": true, "isTarget": false},
-        {"id": 7, "x": 663, "y": 824, "isGround": false, "isTarget": true},
-        {"id": 8, "x": 360, "y": 809, "isGround": false, "isTarget": false}
+        {"id": 0, "x": -671, "y": -530, "isGround": true, "isTarget": false},
+        {"id": 1, "x": -366, "y": -524, "isGround": true, "isTarget": false},
+        {"id": 2, "x": -666, "y": -616, "isGround": false, "isTarget": false},
+        {"id": 3, "x": -361, "y": -686, "isGround": false, "isTarget": false},
+        {"id": 4, "x": -544, "y": -333, "isGround": false, "isTarget": false},
+        {"id": 5, "x": -369, "y": -393, "isGround": false, "isTarget": false},
+        {"id": 6, "x": -101, "y": -721, "isGround": true, "isTarget": false},
+        {"id": 7, "x": -663, "y": -824, "isGround": false, "isTarget": true},
+        {"id": 8, "x": -360, "y": -809, "isGround": false, "isTarget": false}
       ],
       "edges": [
         {"nodeIds": [0, 2], "isMotor": true},
@@ -72,14 +72,14 @@ let solutions = {
     },
     "Level 4": {
         "nodes": [
-            {"id": 0, "x": 600, "y": 459, "isGround": true, "isTarget": false},
-            {"id": 1, "x": 294, "y": 453, "isGround": true, "isTarget": false},
-            {"id": 2, "x": 603, "y": 531, "isGround": false, "isTarget": false},
-            {"id": 3, "x": 294, "y": 547, "isGround": false, "isTarget": false},
-            {"id": 4, "x": 294, "y": 350, "isGround": true, "isTarget": false},
-            {"id": 5, "x": 206, "y": 599, "isGround": false, "isTarget": false},
-            {"id": 6, "x": 391, "y": 597, "isGround": false, "isTarget": false},
-            {"id": 7, "x": 297, "y": 657, "isGround": false, "isTarget": true}
+            {"id": 0, "x": -600, "y": -459, "isGround": true, "isTarget": false},
+            {"id": 1, "x": -294, "y": -453, "isGround": true, "isTarget": false},
+            {"id": 2, "x": -603, "y": -531, "isGround": false, "isTarget": false},
+            {"id": 3, "x": -294, "y": -547, "isGround": false, "isTarget": false},
+            {"id": 4, "x": -294, "y": -350, "isGround": true, "isTarget": false},
+            {"id": 5, "x": -206, "y": -599, "isGround": false, "isTarget": false},
+            {"id": 6, "x": -391, "y": -597, "isGround": false, "isTarget": false},
+            {"id": 7, "x": -297, "y": -657, "isGround": false, "isTarget": true}
         ],
         "edges": [
             {"nodeIds": [0, 2], "isMotor": true},
@@ -96,12 +96,12 @@ let solutions = {
     },
     "Level 5": {
       "nodes": [
-        {"id": 0, "x": 576, "y": 566, "isGround": true, "isTarget": false},
-        {"id": 1, "x": 580, "y": 461, "isGround": false, "isTarget": false},
-        {"id": 2, "x": 416, "y": 610, "isGround": false, "isTarget": false},
-        {"id": 3, "x": 581, "y": 304, "isGround": true, "isTarget": false},
-        {"id": 4, "x": 741, "y": 610, "isGround": false, "isTarget": false},
-        {"id": 5, "x": 576, "y": 774, "isGround": false, "isTarget": true}
+        {"id": 0, "x": -576, "y": -566, "isGround": true, "isTarget": false},
+        {"id": 1, "x": -580, "y": -461, "isGround": false, "isTarget": false},
+        {"id": 2, "x": -416, "y": -610, "isGround": false, "isTarget": false},
+        {"id": 3, "x": -581, "y": -304, "isGround": true, "isTarget": false},
+        {"id": 4, "x": -741, "y": -610, "isGround": false, "isTarget": false},
+        {"id": 5, "x": -576, "y": -774, "isGround": false, "isTarget": true}
       ],
       "edges": [
         {"nodeIds": [0, 1], "isMotor": true},
