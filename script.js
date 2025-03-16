@@ -185,7 +185,8 @@ function init() {
     setupMobileControls();
     setupSimulationControls();
     setViewportHeight();
-    
+    setupMobileToggle();
+
     // Add first operation to history (empty canvas)
     addToHistory();
     // Create initial four-bar mechanism
@@ -193,6 +194,35 @@ function init() {
     
     
     updateStatusMessage('Ready to design! Select a tool to start.');
+}
+
+function setupMobileToggle() {
+    const toggleBtn = document.getElementById('mobile-controls-toggle');
+    const mobileControls = document.querySelector('.mobile-controls');
+    const mobileControlsContainer = document.querySelector('.mobile-toggle');
+    
+    // Check if there's a saved state in localStorage
+    const isMobileControlsCollapsed = false;
+    
+    // Initialize state based on saved preference
+    if (isMobileControlsCollapsed) {
+        mobileControls.classList.add('collapsed');
+        toggleBtn.classList.add('collapsed');
+        mobileControlsContainer.classList.add('collapsed');
+    }
+    
+    toggleBtn.addEventListener('click', () => {
+        // Toggle collapsed state
+        mobileControls.classList.toggle('collapsed');
+        toggleBtn.classList.toggle('collapsed');
+        mobileControlsContainer.classList.toggle('collapsed');
+        
+        // Save state to localStorage
+        localStorage.setItem(
+            'mobileControlsCollapsed', 
+            mobileControls.classList.contains('collapsed')
+        );
+    });
 }
 
 // Update the animation loop to skip locking frames

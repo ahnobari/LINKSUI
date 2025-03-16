@@ -190,6 +190,7 @@ body {
     padding: 0 15px;
     font-size: 0.8rem;
     color: var(--text-secondary);
+    z-index: 1000;
 }
 
 /* Node Styling */
@@ -1004,4 +1005,64 @@ body:not(.simulation-mode) .simulation-path {
 
 .locking-indicator.visible {
     opacity: 1;
+}
+
+/* Mobile Controls Toggle Button */
+.mobile-toggle {
+    position: fixed;
+    bottom: 305px;
+    right: 10px;
+    z-index: 101;
+    display: none; /* Hidden by default, shown on small screens */
+    transition: bottom 0.3s ease;
+  }
+  
+  .mobile-toggle button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--accent-primary);
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+  }
+  
+  .mobile-toggle button:hover {
+    background-color: var(--accent-secondary);
+  }
+  
+  .mobile-toggle button:active {
+    transform: scale(0.95);
+  }
+  
+  .mobile-toggle button.collapsed i {
+    transform: rotate(180deg);
+  }
+  
+  /* Animation for mobile controls */
+  .mobile-controls {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  
+  .mobile-controls.collapsed {
+    transform: translateY(300px);
+    opacity: 0;
+    pointer-events: none;
+  }
+  
+  /* Show toggle button on small screens */
+  @media (max-width: 768px) {
+    .mobile-toggle {
+      display: block;
+    }
+}
+
+.mobile-toggle.collapsed {
+    bottom: 50px;
 }
