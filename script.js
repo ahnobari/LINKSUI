@@ -25,6 +25,8 @@ let animationFrameId = null;
 let lastTimestamp = 0;
 let animationSpeed = 0.2; // Degrees per millisecond (can be adjusted)
 let animation_inverted = false;
+let moveSimulationTimeout = null;
+let isCurrentlyMoving = false;
 
 // DOM Elements
 const canvas = document.getElementById('linkage-canvas');
@@ -1140,6 +1142,8 @@ function setActiveTool(tool) {
         updateStatusMessage('Exit simulation mode first to use design tools.');
         return;
     }
+
+    clearTempSimulationPath();
     // Remove active class from all tools
     document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.mobile-btn').forEach(btn => btn.classList.remove('active'));
@@ -1634,6 +1638,12 @@ function makeDraggable(element) {
         pos3 = e.clientX;
         pos4 = e.clientY;
         
+        // Set flag that we're currently moving
+        isCurrentlyMoving = true;
+        
+        // Clear any existing temp path
+        clearTempSimulationPath();
+        
         document.onmouseup = closeDragElement;
         document.onmousemove = elementDrag;
     }
@@ -1645,6 +1655,12 @@ function makeDraggable(element) {
         const touch = e.touches[0];
         pos3 = touch.clientX;
         pos4 = touch.clientY;
+        
+        // Set flag that we're currently moving
+        isCurrentlyMoving = true;
+        
+        // Clear any existing temp path
+        clearTempSimulationPath();
         
         document.ontouchend = closeDragElement;
         document.ontouchmove = elementTouchDrag;
@@ -1682,6 +1698,9 @@ function makeDraggable(element) {
         
         // Update connected edges
         updateConnectedEdges(element);
+        
+        // Schedule simulation update (debounced to avoid too many simulations)
+        scheduleMoveSim();
     }
     
     function elementTouchDrag(e) {
@@ -1713,6 +1732,9 @@ function makeDraggable(element) {
         // Update connected edges
         updateConnectedEdges(element);
         
+        // Schedule simulation update (debounced to avoid too many simulations)
+        scheduleMoveSim();
+        
         // Prevent page scrolling while dragging
         e.preventDefault();
     }
@@ -1723,10 +1745,128 @@ function makeDraggable(element) {
         document.onmousemove = null;
         document.ontouchend = null;
         document.ontouchmove = null;
-
+        
+        // Clear the moving flag
+        isCurrentlyMoving = false;
+        
+        // Clear any simulation timeouts
+        if (moveSimulationTimeout) {
+            clearTimeout(moveSimulationTimeout);
+            moveSimulationTimeout = null;
+        }
+        
+        // Run a final simulation with more steps for better accuracy
+        runMoveSimulation(200);
+        
         addToHistory();
+        clearTempSimulationPath();
     }
 }
+
+function scheduleMoveSim() {
+    if (moveSimulationTimeout) {
+        clearTimeout(moveSimulationTimeout);
+    }
+    
+    moveSimulationTimeout = setTimeout(() => {
+        // Run simulation with fewer steps during movement for better performance
+        runMoveSimulation(200);
+    }, 0); // 50ms debounce
+}
+
+
+function runMoveSimulation(numSteps = 200) {
+    // Only run if we have a target node
+    if (!targetNode || !isCurrentlyMoving) return;
+    
+    // Get current mechanism state
+    const state = getMechanismState();
+    
+    // Check minimum requirements for simulation
+    if (state.nodes.length < 2 || state.edges.length < 1) {
+        return;
+    }
+    
+    // Check for motor edge
+    if (!motorEdge) {
+        return;
+    }
+    
+    // Run simulation with fewer steps for performance
+    try {
+        const simulation = simulateMechanism(state, numSteps);
+        
+        // If simulation is valid, draw the target path
+        if (simulation.isValid) {
+            drawTempTargetPath(simulation.positions, simulation.lockingFrames, targetNode);
+        }
+    } catch (error) {
+        console.log('Move simulation error:', error);
+        // Silent fail - don't interrupt the user's movement
+    }
+}
+
+function drawTempTargetPath(positions, lockingFrames, targetNode) {
+    // Clear any existing temp path
+    clearTempSimulationPath();
+    
+    // Create a temporary path element
+    const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    pathElement.id = 'temp-simulation-path';
+    pathElement.classList.add('simulation-path', 'target-path');
+    
+    // Get target node ID
+    const targetNodeId = parseInt(targetNode.id.substring(4));
+    
+    // Generate the SVG path data
+    let pathData = "";
+    let validPoints = 0;
+    let currentPath = "";
+    
+    // Check if we have valid position data for the target node
+    positions.forEach((frame, frameIndex) => {
+        const point = frame[targetNodeId];
+        const isValidPoint = point && !isNaN(point[0]) && !isNaN(point[1]);
+        
+        if (isValidPoint && !lockingFrames[frameIndex]) {
+            // Start new path if we don't have one
+            if (currentPath === "") {
+                currentPath = `M${point[0]},${point[1]} `;
+            } else {
+                currentPath += `L${point[0]},${point[1]} `;
+            }
+            validPoints++;
+        } else if (currentPath !== "") {
+            // End current path segment and add to total path
+            pathData += currentPath;
+            currentPath = "";
+        }
+    });
+    
+    // Add final path segment if exists
+    if (currentPath !== "") {
+        pathData += currentPath;
+    }
+    
+    // Only add path if it has valid points
+    if (validPoints > 0) {
+        // Set properties on the path
+        pathElement.setAttribute('d', pathData);
+        pathElement.style.strokeOpacity = '1.0'; // Slightly more transparent during move
+        
+        // Add to canvas directly (not in the paths group)
+        canvas.appendChild(pathElement);
+    }
+}
+
+function clearTempSimulationPath() {
+    const tempPath = document.getElementById('temp-simulation-path');
+    if (tempPath) {
+        tempPath.remove();
+    }
+}
+
+
 
 // Update the positions of edges connected to a node
 function updateConnectedEdges(node) {
