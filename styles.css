@@ -1004,3 +1004,101 @@ body.simulation-mode #canvas-container {
 .locking-indicator.visible {
     opacity: 1;
 }
+
+/* Touch Device Rendering Fixes */
+
+/* Fix viewport height issues on mobile browsers */
+@media (max-width: 768px) {
+    /* Use a more reliable height calculation on mobile */
+    .app-container {
+      height: 100%;
+      min-height: -webkit-fill-available;
+    }
+  
+    /* Fix main area taking full height */
+    .main-area {
+      height: calc(100vh - 30px); /* Account for status bar */
+      height: calc(var(--vh, 1vh) * 100 - 30px); /* Custom vh calculation */
+    }
+  
+    /* Ensure nodes container has proper positioning and dimensions */
+    #nodes-container, #linkage-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      touch-action: none; /* Prevent browser's default touch actions */
+    }
+  
+    /* Ensure canvas container displays properly */
+    #canvas-container {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+    }
+  
+    /* Make mobile controls more accessible */
+    .mobile-controls {
+      bottom: 60px; /* Move up to avoid system UI elements */
+      right: 15px;
+      z-index: 1000; /* Ensure it's above other elements */
+    }
+  
+    /* Simulation controls positioning for mobile */
+    .simulation-controls.active {
+      bottom: 120px; /* Position above mobile controls */
+      width: 90%;
+      max-width: 400px;
+    }
+  
+    /* Fix for tool-name-display */
+    .tool-name-display {
+      max-width: 160px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+  
+  /* Fix for iOS and other mobile browsers with dynamic address bars */
+  body {
+    /* Prevent unwanted scrolling */
+    position: fixed;
+    overflow: hidden;
+    width: 100%;
+  }
+  
+  /* Ensure simulation panel is visible in all modes */
+  .simulation-controls.active {
+    display: flex;
+    opacity: 1;
+    z-index: 1000;
+  }
+  
+  /* Fix position markers so they're always visible */
+  .current-position-marker {
+    z-index: 50;
+  }
+  
+  /* Ensure control buttons are big enough for touch */
+  .mobile-btn, .mobile-file-btn {
+    min-width: 50px;
+    min-height: 50px;
+  }
+  
+  /* Make sure icons are easily visible on mobile */
+  @media (max-width: 768px) {
+    .mobile-btn i, .mobile-file-btn i {
+      font-size: 20px; /* Larger icons for touch */
+    }
+    
+    /* Ensure locking indicator is visible */
+    .locking-indicator.visible {
+      top: 50px; /* Move down to be more visible */
+      z-index: 1000;
+      font-size: 1rem;
+      padding: 8px 12px;
+    }
+}
