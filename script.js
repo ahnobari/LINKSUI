@@ -1016,6 +1016,34 @@ function clearSimulationPaths() {
 }
 
 function setupMobileControls() {
+    const undoButton = document.querySelector('.mobile-btn[data-action="undo"]');
+    const redoButton = document.querySelector('.mobile-btn[data-action="redo"]');
+
+    if (undoButton) {
+        undoButton.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent tool selection behavior
+            if (!simulationMode) {
+                undo();
+                document.querySelector('.tool-name-display').textContent = 'Undo';
+                
+            } else {
+                updateStatusMessage('Exit simulation mode first to use undo.');
+            }
+        });
+    }
+
+    if (redoButton) {
+        redoButton.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent tool selection behavior
+            if (!simulationMode) {
+                redo();
+                document.querySelector('.tool-name-display').textContent = 'Redo';
+            } else {
+                updateStatusMessage('Exit simulation mode first to use redo.');
+            }
+        });
+    }
+
     const mobileButtons = document.querySelectorAll('.mobile-btn');
     const toolNameDisplay = document.querySelector('.tool-name-display');
     
@@ -1026,6 +1054,10 @@ function setupMobileControls() {
             // Special handling for simulation toggle
             if (tool === 'toggle-simulation') {
                 toggleSimulationMode();
+                return;
+            }
+
+            if (tool === 'undo' || tool === 'redo') {
                 return;
             }
             
