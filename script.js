@@ -2915,6 +2915,32 @@ function initChallenge() {
         const challengeLevel = document.getElementById('challenge-level').value;
         const solutionMechanism = solutions[challengeLevel];
 
+
+        // rescale the mechanism to fit and be centered
+        const nodeCount = solutionMechanism.nodes.length;
+        const canvasRect = canvas.getBoundingClientRect();
+        const centerX = canvasRect.width / 2;
+        const centerY = canvasRect.height / 2;
+        
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        solutionMechanism.nodes.forEach(node => {
+            minX = Math.min(minX, node.x);
+            minY = Math.min(minY, node.y);
+            maxX = Math.max(maxX, node.x);
+            maxY = Math.max(maxY, node.y);
+        });
+
+        const width = maxX - minX;
+        const height = maxY - minY;
+        const scale = Math.min(canvasRect.width / width, canvasRect.height / height) * 0.5;
+        const offsetX = centerX - (minX + maxX) / 2 * scale;
+        const offsetY = centerY - (minY + maxY) / 2 * scale;
+
+        solutionMechanism.nodes.forEach(node => {
+            node.x = node.x * scale + offsetX;
+            node.y = node.y * scale + offsetY;
+        });
+
         loadMechanismState(solutionMechanism);
         addToHistory();
     });
