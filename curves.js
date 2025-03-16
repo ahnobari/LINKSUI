@@ -64,6 +64,7 @@ let solutions = {
         {"nodeIds": [2, 7], "isMotor": false},
         {"nodeIds": [3, 4], "isMotor": false},
         {"nodeIds": [3, 5], "isMotor": false},
+        {"nodeIds": [4, 5], "isMotor": false},
         {"nodeIds": [5, 8], "isMotor": false},
         {"nodeIds": [6, 8], "isMotor": false},
         {"nodeIds": [7, 8], "isMotor": false}
