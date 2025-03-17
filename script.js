@@ -34,8 +34,8 @@ let quickSimAnimationId = null;
 let quickSimCompleted = false;
 let savedTool = null;
 let quickSimStartFrame = 0;
-
 let isPanelOpen = true;
+let quickSimTicks = 0;
 
 // DOM Elements
 const canvas = document.getElementById('linkage-canvas');
@@ -577,6 +577,7 @@ function enterSimulationMode() {
     }
     
     // Set proper tool state
+    savedTool = activeTool;
     activeTool = null;
     
     updateStatusMessage('Simulation mode active. Use controls to animate the mechanism.');
@@ -682,6 +683,9 @@ function exitSimulationMode() {
     
     // Reset nodes to their original positions
     resetNodePositions();
+
+    // Restore active tool
+    activeTool = savedTool;
     
     updateStatusMessage('Returned to design mode.');
 }
@@ -2570,6 +2574,7 @@ function startQuickSim() {
     
     // Reset traced path points
     tracedPathPoints = {};
+    quickSimTicks = 0;
     
     // Clear any existing paths
     clearTempSimulationPath();
@@ -2698,7 +2703,8 @@ function quickSimAnimationLoop(timestamp) {
     
     // Use a fixed speed for quick sim
     const quickSimSpeed = 20;
-    
+    const lastSimulationPosition = simulationPosition;
+
     // Calculate new position
     const degreesPerFrame = (deltaTime * animationSpeed * quickSimSpeed / 50);
     let newPosition = (simulationPosition + degreesPerFrame * (animation_inverted ? -1 : 1)) % simulationMaxPosition;
@@ -2749,15 +2755,19 @@ function quickSimAnimationLoop(timestamp) {
     // Draw the traced paths
     drawTracedPaths();
     
+    // angle delta in -180 to 180 range
+    const angleDelta = (simulationPosition - quickSimStartAngle + 360) % 360;
+    const lastAngleDelta = (lastSimulationPosition - quickSimStartAngle + 360) % 360;
 
-    const currentFrameIdx =  Math.round((simulationPosition / 360) * (window.currentSimulation.positions.length - 1));
-    // Check if we've completed a cycle (returned to starting angle in FORWARD direction only)
-    if (!animation_inverted && currentFrameIdx === quickSimStartFrame) {
-        // Only complete if we're in forward direction
+    if (!animation_inverted && angleDelta < lastAngleDelta) {
+        quickSimTicks++;
+    }
+
+    if (quickSimTicks >= 1) {
         endQuickSim();
         return;
     }
-    
+
     // Continue animation loop
     quickSimAnimationId = requestAnimationFrame(quickSimAnimationLoop);
 }
