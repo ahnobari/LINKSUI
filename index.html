@@ -18,6 +18,12 @@
             
             <div class="tools">
                 <div class="tool-section">
+                    <button id="quick-sim" class="tool-btn" title="Quick Simulation (Q)">
+                        <i class="fas fa-bolt"></i>
+                        <span>Quick Sim</span>
+                    </button>
+                </div>
+                <div class="tool-section">
                     <h3>Add Elements</h3>
                     <button id="add-ground" class="tool-btn" title="Add Ground Node (G)">
                         <i class="fas fa-anchor"></i>
@@ -83,10 +89,6 @@
 
                 <div class="tool-section">
                     <h3>Simulation</h3>
-                    <button id="quick-sim" class="tool-btn" title="Quick Simulation (Q)">
-                        <i class="fas fa-bolt"></i>
-                        <span>Quick Sim</span>
-                    </button>
                     <button id="toggle-simulation" class="tool-btn" title="Toggle Simulation Mode (S)">
                         <i class="fas fa-play-circle"></i>
                         <span>Simulate</span>
@@ -157,6 +159,9 @@
             </div>
             <div class="mobile-controls">
                 <div class="mobile-controls-buttons">
+                    <button data-tool="quick-sim" class="mobile-btn" style="grid-column: span 3;width: auto;"><i class="fas fa-bolt"></i></button>
+                    <button data-tool="toggle-simulation" class="mobile-btn" style="grid-column: span 2;width: auto;"><i class="fas fa-play-circle"></i></button>
+                    <button data-tool="toggle-preview" class="mobile-btn"><i class="fas fa-eye"></i></button>
                     <button data-tool="add-ground" class="mobile-btn"><i class="fas fa-anchor"></i></button>
                     <button data-tool="add-node" class="mobile-btn"><i class="fas fa-circle"></i></button>
                     <button data-tool="add-link" class="mobile-btn"><i class="fas fa-link"></i></button>
@@ -164,9 +169,6 @@
                     <button data-tool="delete" class="mobile-btn"><i class="fas fa-trash-alt"></i></button>
                     <button data-tool="select-motor" class="mobile-btn"><i class="fas fa-cog"></i></button>
                     <button data-tool="select-target" class="mobile-btn"><i class="fas fa-bullseye"></i></button>
-                    <button data-tool="quick-sim" class="mobile-btn"><i class="fas fa-bolt"></i></button>
-                    <button data-tool="toggle-simulation" class="mobile-btn"><i class="fas fa-play-circle"></i></button>
-                    <button data-tool="toggle-preview" class="mobile-btn"><i class="fas fa-eye"></i></button>
                     <button data-action="undo" class="mobile-btn"><i class="fas fa-undo"></i></button>
                     <button data-action="redo" class="mobile-btn"><i class="fas fa-redo"></i></button>
                 </div>

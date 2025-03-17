@@ -165,6 +165,73 @@ body {
   margin-bottom: 5px;
 }
 
+.sidebar-header {
+  padding: 10px 15px;
+}
+
+.sidebar-header h1 {
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+/* Reduce spacing in tool sections */
+.tool-section {
+  margin-bottom: 8px;
+}
+
+.tool-section h3 {
+  font-size: 0.8rem;
+  margin-bottom: 4px;
+  padding-bottom: 3px;
+}
+
+/* Make buttons more compact */
+.tool-btn {
+  padding: 5px 8px;
+  margin-bottom: 2px;
+  min-height: 30px;
+}
+
+.tool-btn i {
+  margin-right: 8px;
+  width: 16px;
+  font-size: 0.9rem;
+}
+
+.tool-btn span {
+  font-size: 0.85rem;
+}
+
+/* Reduce padding in tools container */
+.tools {
+  padding: 10px;
+}
+
+/* Make footer more compact */
+.sidebar-footer {
+  padding: 8px 10px;
+  font-size: 0.7rem;
+}
+
+/* Increase the available space for content */
+.tool-section:last-child {
+  margin-bottom: 5px;
+}
+
+/* Adjust sidebar scrollbar for better appearance */
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background-color: var(--bg-tertiary);
+  border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background-color: var(--bg-secondary);
+}
+
 /* ================ MAIN CANVAS AREA ================ */
 .main-area {
   flex: 1;
@@ -627,7 +694,7 @@ body.select-target {
 
 .mobile-controls-buttons {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   grid-gap: 5px;
   background-color: rgba(var(--bg-secondary-rgb), 0.8);
   border-radius: 10px;
@@ -673,7 +740,7 @@ body.select-target {
 }
 
 .mobile-file-btn {
-  width: 50px;
+  width: auto;
   height: 50px;
   border-radius: 8px;
   background-color: var(--bg-tertiary);
@@ -705,7 +772,7 @@ body.select-target {
 
 .mobile-toggle {
   position: fixed;
-  bottom: 370px;
+  bottom: 315px;
   right: 10px;
   z-index: 101;
   display: none;
@@ -714,7 +781,7 @@ body.select-target {
 
 .simulation-mode .mobile-toggle {
   bottom: 235px;
-  right: calc(50% - 200px);
+  right: calc(50% - 20px);
 }
 
 .mobile-toggle.collapsed {
@@ -1118,4 +1185,38 @@ body.simulation-mode .mobile-controls-file {
   .challenge-canvas-container {
       height: 120px;
   }
+}
+
+#quick-sim {
+  order: -1; /* Force to the beginning regardless of DOM position */
+  margin: 5px 0 12px 0;
+  padding: 10px 12px;
+  background-color: var(--warning);
+  color: #000;
+  font-weight: 500;
+  font-size: 0.95rem;
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+  min-height: 38px;
+}
+
+#quick-sim i {
+  color: inherit;
+  font-size: 1.2rem;
+}
+
+#quick-sim:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.mobile-btn[data-tool="quick-sim"]{
+  
+}
+
+#quick-sim.active,
+.mobile-btn[data-tool="quick-sim"].active {
+  background-color: #ff8c00;
+  color: white;
 }
