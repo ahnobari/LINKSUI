@@ -33,6 +33,7 @@ let quickSimStartAngle = 0;
 let quickSimAnimationId = null;
 let quickSimCompleted = false;
 let savedTool = null;
+let quickSimStartFrame = 0;
 
 let isPanelOpen = true;
 
@@ -2631,6 +2632,7 @@ function startQuickSim() {
     
     // Store as our start angle - we'll use this to determine when we've completed a cycle
     quickSimStartAngle = angle;
+    quickSimStartFrame = Math.round((angle / 360) * (window.currentSimulation.positions.length - 1));
     
     // Set the simulation position to the angle of the motor edge
     simulationPosition = angle;
@@ -2747,8 +2749,10 @@ function quickSimAnimationLoop(timestamp) {
     // Draw the traced paths
     drawTracedPaths();
     
+
+    const currentFrameIdx =  Math.round((simulationPosition / 360) * (window.currentSimulation.positions.length - 1));
     // Check if we've completed a cycle (returned to starting angle in FORWARD direction only)
-    if (!animation_inverted && Math.abs(quickSimStartAngle - simulationPosition) < 0.25) {
+    if (!animation_inverted && currentFrameIdx === quickSimStartFrame) {
         // Only complete if we're in forward direction
         endQuickSim();
         return;
