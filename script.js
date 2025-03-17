@@ -2022,6 +2022,32 @@ function deleteNode(node) {
         targetNode = null;
     }
     
+    // re-number all existing nodes (so it maxes out at nodeCount-1)
+    const nodes = document.querySelectorAll('.node');
+    let shiftedIds = {};
+    nodes.forEach((node, index) => {
+        const id = parseInt(node.id.substring(4));
+        shiftedIds[id] = index;
+        node.id = `Node${index}`;
+        if(!node.classList.contains('ground')) node.innerHTML = `<span>${index}</span>`;
+    });
+
+    // Update all edges to reflect the new node IDs
+    edges = edges.map(edge => {
+        const edgeElem = document.getElementById(`edge_${edge[0]}_${edge[1]}`) ||
+                         document.getElementById(`edge_${edge[1]}_${edge[0]}`);
+        edgeElem.setAttribute('data-start', `Node${shiftedIds[edge[0]]}`);
+        edgeElem.setAttribute('data-end', `Node${shiftedIds[edge[1]]}`);
+        edgeElem.id = `edge_${shiftedIds[edge[0]]}_${shiftedIds[edge[1]]}`;
+
+        const edgeGroup = document.getElementById(`edge_group_${edge[0]}_${edge[1]}`) ||
+                         document.getElementById(`edge_group_${edge[1]}_${edge[0]}`);
+        edgeGroup.id = `edge_group_${shiftedIds[edge[0]]}_${shiftedIds[edge[1]]}`;
+
+        return [shiftedIds[edge[0]], shiftedIds[edge[1]]];
+    }
+    );
+
     updateDOF();
     updateStatusMessage(`Node ${numericId} deleted.`);
 }
